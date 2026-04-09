@@ -20,7 +20,7 @@
         }
         
         .container {
-            max-width: 600px;
+            max-width: 500px;
             margin: 0 auto;
             padding: 80px 20px 40px;
         }
@@ -42,37 +42,6 @@
             text-align: center;
             color: #8a92b0;
             margin-bottom: 30px;
-        }
-        
-        .user-info {
-            background: #1a1f30;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 25px;
-        }
-        
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #2d3748;
-        }
-        
-        .info-row:last-child {
-            border-bottom: none;
-        }
-        
-        .info-label {
-            color: #8a92b0;
-            font-size: 14px;
-        }
-        
-        .info-value {
-            font-weight: 600;
-        }
-        
-        .verified-badge {
-            color: #2dd4bf;
         }
         
         .amount-input {
@@ -197,30 +166,7 @@
 <div class="container">
     <div class="deposit-card">
         <h1><i class="fas fa-plus-circle"></i> Deposit Funds</h1>
-        <p class="subtitle">Add funds to start AI trading</p>
-        
-        <div class="user-info" id="userInfo">
-            <div class="info-row">
-                <span class="info-label"><i class="fas fa-user"></i> Name</span>
-                <span class="info-value" id="userName">Loading...</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label"><i class="fas fa-envelope"></i> Email</span>
-                <span class="info-value" id="userEmail">Loading...</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label"><i class="fas fa-map-marker-alt"></i> Country</span>
-                <span class="info-value" id="userCountry">Loading...</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label"><i class="fas fa-phone"></i> Phone</span>
-                <span class="info-value" id="userPhone">Loading...</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label"><i class="fas fa-check-circle"></i> Status</span>
-                <span class="info-value" id="userStatus">Loading...</span>
-            </div>
-        </div>
+        <p class="subtitle">Add funds to start trading</p>
         
         <div class="amount-input">
             <label>Amount (USD)</label>
@@ -233,7 +179,7 @@
                 <button class="preset-btn" data-amount="1000">$1,000</button>
                 <button class="preset-btn" data-amount="5000">$5,000</button>
             </div>
-            <div class="min-note"><i class="fas fa-info-circle"></i> Minimum deposit: $80 USD. Deposits of $115+ auto-verify your account for AI trading.</div>
+            <div class="min-note"><i class="fas fa-info-circle"></i> Minimum deposit: $80 USD</div>
         </div>
         
         <button class="deposit-btn" id="depositNowBtn"><i class="fas fa-credit-card"></i> Deposit Now</button>
@@ -258,26 +204,6 @@
     if (!token) window.location.href = 'index.html';
     
     let currentPaymentId = null;
-    
-    async function loadUserInfo() {
-        try {
-            const response = await fetch(`${API_URL}/api/user/profile`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
-            const userData = data.user;
-            
-            document.getElementById('userName').innerHTML = userData.fullName;
-            document.getElementById('userEmail').innerHTML = userData.email;
-            document.getElementById('userCountry').innerHTML = userData.country;
-            document.getElementById('userPhone').innerHTML = `${userData.countryCode} ${userData.phoneNumber}`;
-            document.getElementById('userStatus').innerHTML = userData.isVerified ? 
-                '<span class="verified-badge"><i class="fas fa-check-circle"></i> Verified</span>' : 
-                '<span style="color:#ffc107;"><i class="fas fa-clock"></i> Pending Verification</span>';
-        } catch (error) {
-            console.error('Error loading user info:', error);
-        }
-    }
     
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.onclick = () => {
@@ -304,7 +230,6 @@
             if (data.success) {
                 currentPaymentId = data.paymentId;
                 
-                // Show NowPayments donation widget
                 const paymentDiv = document.getElementById('paymentFrame');
                 paymentDiv.innerHTML = `
                     <a href="${data.nowPaymentsUrl}" target="_blank" rel="noreferrer noopener">
@@ -317,8 +242,6 @@
                 `;
                 
                 document.getElementById('paymentInfo').classList.add('active');
-                
-                // Start checking status periodically
                 startStatusCheck();
             } else {
                 alert(data.error || 'Failed to create deposit');
@@ -358,8 +281,6 @@
     }
     
     document.getElementById('checkStatusBtn').onclick = checkPaymentStatus;
-    
-    loadUserInfo();
 </script>
 </body>
 </html>

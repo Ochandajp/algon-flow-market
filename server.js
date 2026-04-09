@@ -1,11 +1,14 @@
+require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const axios = require('axios');
-require('dotenv').config();
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,19 +17,29 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
+
+// Session store with MongoDB (production ready)
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://officialwrittershub_db_user:Fellix@cluster0.6g8mg9p.mongodb.net/algonflow?retryWrites=true&w=majority';
+
 app.use(session({
-    secret: 'algonflow_secret_key_2024',
+    secret: process.env.SESSION_SECRET || 'algonflow_secret_key_2024',
     resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
+    saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: MONGODB_URI,
+        ttl: 24 * 60 * 60 // 1 day
+    }),
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: 'lax'
+    }
 }));
 
-// MongoDB Connection
-const MONGODB_URI = 'mongodb+srv://officialwrittershub_db_user:Fellix@cluster0.6g8mg9p.mongodb.net/algonflow?retryWrites=true&w=majority';
-
+// MongoDB Connection (without deprecated options)
 mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
 }).then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
@@ -47,6 +60,8 @@ const userSchema = new mongoose.Schema({
     totalProfit: { type: Number, default: 0 },
     totalLoss: { type: Number, default: 0 },
     winRate: { type: Number, default: 0 },
+    totalTrades: { type: Number, default: 0 },
+    winningTrades: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now },
     lastLogin: { type: Date },
     isAdmin: { type: Boolean, default: false },
@@ -118,7 +133,7 @@ const authenticateToken = (req, res, next) => {
     if (!token) return res.status(401).json({ error: 'Access denied' });
     
     try {
-        const verified = jwt.verify(token, 'algonflow_jwt_secret');
+        const verified = jwt.verify(token, process.env.JWT_SECRET || 'algonflow_jwt_secret');
         req.user = verified;
         next();
     } catch (error) {
@@ -162,7 +177,7 @@ app.post('/api/register', async (req, res) => {
         
         await user.save();
         
-        const token = jwt.sign({ id: user._id, email: user.email, isAdmin: user.isAdmin }, 'algonflow_jwt_secret');
+        const token = jwt.sign({ id: user._id, email: user.email, isAdmin: user.isAdmin }, process.env.JWT_SECRET || 'algonflow_jwt_secret');
         
         res.status(201).json({ 
             success: true, 
@@ -188,7 +203,7 @@ app.post('/api/login', async (req, res) => {
         user.lastLogin = new Date();
         await user.save();
         
-        const token = jwt.sign({ id: user._id, email: user.email, isAdmin: user.isAdmin }, 'algonflow_jwt_secret');
+        const token = jwt.sign({ id: user._id, email: user.email, isAdmin: user.isAdmin }, process.env.JWT_SECRET || 'algonflow_jwt_secret');
         
         res.json({ 
             success: true, 
@@ -206,8 +221,9 @@ app.post('/api/deposit/create', authenticateToken, async (req, res) => {
         const { amount } = req.body;
         const user = await User.findById(req.user.id);
         
-        if (amount < 80) {
-            return res.status(400).json({ error: 'Minimum deposit is $80 USD' });
+        const MIN_DEPOSIT = parseInt(process.env.MIN_DEPOSIT) || 80;
+        if (amount < MIN_DEPOSIT) {
+            return res.status(400).json({ error: `Minimum deposit is $${MIN_DEPOSIT} USD` });
         }
         
         const paymentId = 'DEP_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
@@ -222,8 +238,7 @@ app.post('/api/deposit/create', authenticateToken, async (req, res) => {
         
         await deposit.save();
         
-        // NowPayments donation URL
-        const nowPaymentsUrl = `https://nowpayments.io/donation?api_key=b1530430-00df-4732-8666-cd76d36c2268&amount=${amount}&currency=USD`;
+        const nowPaymentsUrl = `https://nowpayments.io/donation?api_key=${process.env.NOWPAYMENTS_API_KEY}&amount=${amount}&currency=USD`;
         
         res.json({ 
             success: true, 
@@ -251,11 +266,6 @@ app.post('/api/deposit/confirm-webhook', async (req, res) => {
             const user = await User.findById(deposit.userId);
             user.balance += deposit.amount;
             user.totalDeposits += deposit.amount;
-            
-            // Auto-verify user if deposit is $115 or more
-            if (deposit.amount >= 115) {
-                user.isVerified = true;
-            }
             
             await user.save();
             
@@ -294,8 +304,9 @@ app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
         const { amount, network, address } = req.body;
         const user = await User.findById(req.user.id);
         
-        if (amount < 50) {
-            return res.status(400).json({ error: 'Minimum withdrawal is $50 USD' });
+        const MIN_WITHDRAWAL = parseInt(process.env.MIN_WITHDRAWAL) || 50;
+        if (amount < MIN_WITHDRAWAL) {
+            return res.status(400).json({ error: `Minimum withdrawal is $${MIN_WITHDRAWAL} USD` });
         }
         
         if (user.balance < amount) {
@@ -304,10 +315,8 @@ app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
         
         const withdrawalId = 'WD_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
         
-        // Deduct balance immediately
         user.balance -= amount;
         
-        // Add to pending withdrawals
         user.pendingWithdrawals.push({
             id: withdrawalId,
             amount: amount,
@@ -339,58 +348,57 @@ app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
 });
 
 // ============= AI TRADING ROUTES =============
-app.post('/api/ai/set-api-key', authenticateToken, async (req, res) => {
+app.post('/api/ai/save-passkey', authenticateToken, async (req, res) => {
     try {
-        const { apiKey } = req.body;
+        const { passkey } = req.body;
         const user = await User.findById(req.user.id);
         
-        if (!user.isVerified && user.balance < 115) {
-            return res.status(403).json({ error: 'Need minimum $115 balance or verified status to use AI trading' });
-        }
-        
-        user.aiApiKey = apiKey;
+        user.aiApiKey = passkey;
         await user.save();
         
-        res.json({ success: true, message: 'API Key saved successfully' });
+        res.json({ success: true, message: 'Passkey saved successfully' });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to save API key' });
+        res.status(500).json({ error: 'Failed to save passkey' });
     }
 });
 
-// Calculate profit based on amount and duration
+// Calculate profit based on amount and duration (Loss below 12%)
 function calculateProfit(amount, durationMs, side) {
     const amountInUSD = amount;
     let profitPercent = 0;
     
-    // Determine profit percentage based on amount
+    const AI_PROFIT_SMALL = parseInt(process.env.AI_PROFIT_SMALL) || 25;
+    const AI_PROFIT_MEDIUM = parseInt(process.env.AI_PROFIT_MEDIUM) || 70;
+    const AI_PROFIT_LARGE = parseInt(process.env.AI_PROFIT_LARGE) || 83;
+    const MAX_LOSS_PERCENT = parseFloat(process.env.MAX_LOSS_PERCENT) || 11.9;
+    const COMPANY_FEE_PERCENT = parseFloat(process.env.COMPANY_FEE_PERCENT) || 3;
+    
     if (amountInUSD < 500) {
-        profitPercent = 25; // 25% for under $500
+        profitPercent = AI_PROFIT_SMALL;
     } else if (amountInUSD >= 500 && amountInUSD < 3000) {
-        profitPercent = 70; // 70% for $500-$3000
+        profitPercent = AI_PROFIT_MEDIUM;
     } else {
-        profitPercent = 83; // 83% for $3000+
+        profitPercent = AI_PROFIT_LARGE;
     }
     
-    // Adjust based on duration
     const durationHours = durationMs / (1000 * 60 * 60);
-    if (durationHours < 0.1) { // less than 6 minutes
+    if (durationHours < 0.1) {
         profitPercent = profitPercent * 0.3;
-    } else if (durationHours < 1) { // less than 1 hour
+    } else if (durationHours < 1) {
         profitPercent = profitPercent * 0.5;
-    } else if (durationHours >= 24) { // 1 day or more
+    } else if (durationHours >= 24) {
         profitPercent = profitPercent * 1.2;
     }
     
-    // 2 out of 5 trades should be loss (20% chance of loss)
-    const isLoss = Math.random() < 0.4; // 40% chance of loss to ensure 2/5 ratio
+    // Loss rate below MAX_LOSS_PERCENT (default 11.9%)
+    const isLoss = Math.random() < 0.3;
     
     if (isLoss) {
-        profitPercent = -10; // Maximum 10% loss
+        profitPercent = -(Math.random() * MAX_LOSS_PERCENT);
     }
     
-    // Company takes 3% fee on profits
     const grossProfit = (amount * profitPercent) / 100;
-    const companyFee = grossProfit * 0.03;
+    const companyFee = grossProfit * (COMPANY_FEE_PERCENT / 100);
     const netProfit = grossProfit - companyFee;
     
     return {
@@ -403,8 +411,7 @@ function calculateProfit(amount, durationMs, side) {
 }
 
 // Analyze market and decide side
-async function analyzeMarket(symbol, category, apiKey) {
-    // Simulate AI market analysis
+async function analyzeMarket(symbol, category, passkey) {
     const volatility = Math.random() * 100;
     const momentum = Math.random() * 200 - 100;
     const rsi = Math.random() * 100;
@@ -437,33 +444,24 @@ async function analyzeMarket(symbol, category, apiKey) {
 
 app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
     try {
-        const { symbol, symbolName, category, amount, leverage, duration, durationMs, apiKey } = req.body;
+        const { symbol, symbolName, category, amount, leverage, duration, durationMs, passkey } = req.body;
         const user = await User.findById(req.user.id);
-        
-        if (!user.isVerified && user.balance < 115) {
-            return res.status(403).json({ error: 'Need minimum $115 balance or verified status to use AI trading' });
-        }
         
         if (user.balance < amount) {
             return res.status(400).json({ error: 'Insufficient balance' });
         }
         
-        if (user.aiApiKey !== apiKey && apiKey) {
-            user.aiApiKey = apiKey;
+        if (user.aiApiKey !== passkey && passkey) {
+            user.aiApiKey = passkey;
             await user.save();
         }
         
-        // Deduct trade amount
         user.balance -= amount;
         await user.save();
         
-        // Analyze market
-        const analysis = await analyzeMarket(symbol, category, apiKey);
-        
-        // Calculate profit projection
+        const analysis = await analyzeMarket(symbol, category, passkey);
         const profitCalc = calculateProfit(amount, durationMs, analysis.side);
         
-        // Get current price
         let currentPrice = 0;
         try {
             const priceResponse = await axios.get(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}USDT`);
@@ -486,7 +484,7 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
             status: 'active',
             entryPrice: currentPrice,
             currentPrice: currentPrice,
-            aiApiKey: apiKey || user.aiApiKey,
+            aiApiKey: passkey || user.aiApiKey,
             tradeHistory: [{
                 timestamp: new Date(),
                 action: 'started',
@@ -497,7 +495,6 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
         
         await trade.save();
         
-        // Schedule trade completion
         setTimeout(async () => {
             await completeTrade(trade._id);
         }, durationMs);
@@ -521,7 +518,6 @@ async function completeTrade(tradeId) {
         const user = await User.findById(trade.userId);
         if (!user) return;
         
-        // Get final price
         let finalPrice = trade.entryPrice;
         try {
             const priceResponse = await axios.get(`https://api.binance.com/api/v3/ticker/price?symbol=${trade.symbol}USDT`);
@@ -533,26 +529,24 @@ async function completeTrade(tradeId) {
         
         trade.currentPrice = finalPrice;
         
-        // Calculate actual profit
         const priceChangePercent = ((finalPrice - trade.entryPrice) / trade.entryPrice) * 100;
         const sideMultiplier = trade.side === 'buy' ? 1 : -1;
         const actualPriceProfitPercent = priceChangePercent * sideMultiplier;
         
-        // Use the profit calculation formula
         const profitCalc = calculateProfit(trade.amount, trade.durationMs, trade.side);
         
         let finalProfit = profitCalc.netProfit;
         let finalProfitPercent = profitCalc.profitPercent;
         let isLoss = profitCalc.isLoss;
         
-        // Adjust based on actual market movement
         const marketImpact = actualPriceProfitPercent / 10;
         finalProfit = finalProfit * (1 + marketImpact);
         finalProfitPercent = finalProfitPercent * (1 + marketImpact);
         
+        const MAX_LOSS_PERCENT = parseFloat(process.env.MAX_LOSS_PERCENT) || 11.9;
         if (finalProfit < 0) {
             isLoss = true;
-            finalProfit = Math.max(finalProfit, -trade.amount * 0.1); // Max 10% loss
+            finalProfit = Math.max(finalProfit, -trade.amount * (MAX_LOSS_PERCENT / 100));
             finalProfitPercent = (finalProfit / trade.amount) * 100;
         }
         
@@ -570,19 +564,21 @@ async function completeTrade(tradeId) {
         
         await trade.save();
         
-        // Update user balance
         const amountToReturn = trade.amount + finalProfit;
         user.balance += amountToReturn;
         
         if (finalProfit > 0) {
             user.totalProfit += finalProfit;
+            user.winningTrades += 1;
         } else {
             user.totalLoss += Math.abs(finalProfit);
         }
         
+        user.totalTrades += 1;
+        user.winRate = (user.winningTrades / user.totalTrades) * 100;
+        
         await user.save();
         
-        // Create transaction record
         const transaction = new Transaction({
             userId: user._id,
             userName: user.fullName,
@@ -650,11 +646,14 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
         const activeTrades = await AITrade.find({ userId: req.user.id, status: 'active' });
         const tradeHistory = await AITrade.find({ userId: req.user.id, status: { $in: ['completed', 'loss'] } }).sort({ endedAt: -1 }).limit(20);
         
+        const roi = user.totalDeposits > 0 ? ((user.totalProfit - user.totalLoss) / user.totalDeposits * 100) : 0;
+        
         res.json({ 
             user, 
             transactions, 
             activeTrades, 
-            tradeHistory 
+            tradeHistory,
+            roi: roi.toFixed(2)
         });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch profile' });
@@ -680,10 +679,6 @@ app.post('/api/admin/add-balance', authenticateToken, isAdmin, async (req, res) 
         
         user.balance += amount;
         user.totalDeposits += amount;
-        
-        if (user.balance >= 115) {
-            user.isVerified = true;
-        }
         
         await user.save();
         
@@ -852,10 +847,6 @@ app.post('/api/admin/confirm-deposit', authenticateToken, isAdmin, async (req, r
         user.balance += deposit.amount;
         user.totalDeposits += deposit.amount;
         
-        if (deposit.amount >= 115) {
-            user.isVerified = true;
-        }
-        
         await user.save();
         
         const transaction = new Transaction({
@@ -918,17 +909,46 @@ app.get('/api/market/candles/:symbol', async (req, res) => {
     }
 });
 
+// Serve static pages
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/register.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'register.html'));
+});
+
+app.get('/dashboard.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
+
+app.get('/admin.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+app.get('/deposit.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'deposit.html'));
+});
+
+app.get('/withdraw.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'withdraw.html'));
+});
+
+app.get('/profile.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'profile.html'));
+});
+
 // Create default admin if not exists
 async function createDefaultAdmin() {
-    const adminExists = await User.findOne({ email: 'admin@algonflow.com' });
+    const adminExists = await User.findOne({ email: process.env.ADMIN_EMAIL || 'admin@algonflow.com' });
     if (!adminExists) {
-        const hashedPassword = await bcrypt.hash('Admin123!', 10);
+        const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Admin123!', 10);
         const admin = new User({
-            email: 'admin@algonflow.com',
+            email: process.env.ADMIN_EMAIL || 'admin@algonflow.com',
             password: hashedPassword,
             fullName: 'System Administrator',
             age: 30,
-            country: 'USA',
+            country: 'United States',
             countryCode: '+1',
             phoneNumber: '1234567890',
             employmentStatus: 'Employed',
@@ -940,11 +960,11 @@ async function createDefaultAdmin() {
             balance: 0
         });
         await admin.save();
-        console.log('✅ Default admin created: admin@algonflow.com / Admin123!');
+        console.log('✅ Default admin created:', process.env.ADMIN_EMAIL || 'admin@algonflow.com');
     }
 }
 
-app.listen(PORT, async () => {
+app.listen(PORT, '0.0.0.0', async () => {
     await createDefaultAdmin();
     console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

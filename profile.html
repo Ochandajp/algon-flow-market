@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>My Profile | Algon Flow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background: #0a0e17;
+            color: #e0e3eb;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 20px 40px;
+        }
+        
+        .profile-header {
+            background: linear-gradient(135deg, #0f1322, #1a1f30);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(45,212,191,0.3);
+        }
+        
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        
+        .profile-name {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .profile-email {
+            color: #8a92b0;
+            margin-bottom: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #0f1322;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(45,212,191,0.2);
+            text-align: center;
+        }
+        
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #2dd4bf;
+        }
+        
+        .stat-card .label {
+            font-size: 12px;
+            color: #8a92b0;
+            margin-top: 5px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .info-card {
+            background: #0f1322;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(45,212,191,0.2);
+        }
+        
+        .info-card h3 {
+            margin-bottom: 15px;
+            color: #2dd4bf;
+            font-size: 18px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            color: #8a92b0;
+        }
+        
+        .info-value {
+            font-weight: 600;
+        }
+        
+        .chart-card {
+            background: #0f1322;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(45,212,191,0.2);
+            margin-bottom: 30px;
+        }
+        
+        .chart-card h3 {
+            margin-bottom: 15px;
+            color: #2dd4bf;
+        }
+        
+        canvas {
+            max-height: 300px;
+            width: 100%;
+        }
+        
+        .trades-table {
+            background: #0f1322;
+            border-radius: 16px;
+            border: 1px solid rgba(45,212,191,0.2);
+            overflow-x: auto;
+        }
+        
+        .trades-table h3 {
+            padding: 20px;
+            border-bottom: 1px solid rgba(45,212,191,0.2);
+            color: #2dd4bf;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        th {
+            color: #2dd4bf;
+            font-size: 12px;
+        }
+        
+        .profit-positive {
+            color: #2dd4bf;
+        }
+        
+        .profit-negative {
+            color: #ff6b6b;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #2d3748;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .back-btn:hover {
+            background: #3d4858;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+    
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <i class="fas fa-user"></i>
+        </div>
+        <div class="profile-name" id="profileName">Loading...</div>
+        <div class="profile-email" id="profileEmail">Loading...</div>
+        <div>Member since: <span id="joinDate">Loading...</span></div>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="value" id="totalProfit">$0</div>
+            <div class="label">Total Profit</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" id="totalLoss">$0</div>
+            <div class="label">Total Loss</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" id="winRate">0%</div>
+            <div class="label">Win Rate</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" id="roi">0%</div>
+            <div class="label">ROI</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" id="totalTrades">0</div>
+            <div class="label">Total Trades</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" id="currentBalance">$0</div>
+            <div class="label">Current Balance</div>
+        </div>
+    </div>
+    
+    <div class="info-grid">
+        <div class="info-card">
+            <h3><i class="fas fa-user-circle"></i> Personal Information</h3>
+            <div class="info-row">
+                <span class="info-label">Full Name</span>
+                <span class="info-value" id="fullName">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value" id="email">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Age</span>
+                <span class="info-value" id="age">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Employment Status</span>
+                <span class="info-value" id="employmentStatus">-</span>
+            </div>
+        </div>
+        
+        <div class="info-card">
+            <h3><i class="fas fa-map-marker-alt"></i> Location & Contact</h3>
+            <div class="info-row">
+                <span class="info-label">Country</span>
+                <span class="info-value" id="country">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Phone</span>
+                <span class="info-value" id="phone">-</span>
+            </div>
+        </div>
+        
+        <div class="info-card">
+            <h3><i class="fas fa-chart-line"></i> Trading Information</h3>
+            <div class="info-row">
+                <span class="info-label">Trading Experience</span>
+                <span class="info-value" id="tradingExperience">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Source of Funds</span>
+                <span class="info-value" id="fundsSource">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Total Deposits</span>
+                <span class="info-value" id="totalDeposits">-</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chart-card">
+        <h3><i class="fas fa-chart-line"></i> Profit/Loss Over Time</h3>
+        <canvas id="profitLossChart"></canvas>
+    </div>
+    
+    <div class="chart-card">
+        <h3><i class="fas fa-chart-line"></i> Balance Growth</h3>
+        <canvas id="balanceChart"></canvas>
+    </div>
+    
+    <div class="trades-table">
+        <h3><i class="fas fa-history"></i> Recent Trades</h3>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr><th>Asset</th><th>Side</th><th>Amount</th><th>Duration</th><th>Profit/Loss</th><th>Date</th></tr>
+                </thead>
+                <tbody id="tradesList"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = window.location.origin;
+    const token = localStorage.getItem('token');
+    
+    if (!token) window.location.href = 'index.html';
+    
+    let profitLossChart, balanceChart;
+    
+    async function loadProfile() {
+        try {
+            const response = await fetch(`${API_URL}/api/user/profile`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            const user = data.user;
+            const trades = data.tradeHistory || [];
+            
+            document.getElementById('profileName').innerText = user.fullName;
+            document.getElementById('profileEmail').innerText = user.email;
+            document.getElementById('joinDate').innerText = new Date(user.createdAt).toLocaleDateString();
+            document.getElementById('totalProfit').innerHTML = `$${user.totalProfit?.toFixed(2) || '0'}`;
+            document.getElementById('totalLoss').innerHTML = `$${user.totalLoss?.toFixed(2) || '0'}`;
+            document.getElementById('winRate').innerHTML = `${user.winRate?.toFixed(1) || '0'}%`;
+            document.getElementById('roi').innerHTML = `${data.roi || '0'}%`;
+            document.getElementById('totalTrades').innerHTML = user.totalTrades || '0';
+            document.getElementById('currentBalance').innerHTML = `$${user.balance?.toFixed(2) || '0'}`;
+            
+            document.getElementById('fullName').innerHTML = user.fullName;
+            document.getElementById('email').innerHTML = user.email;
+            document.getElementById('age').innerHTML = user.age;
+            document.getElementById('employmentStatus').innerHTML = user.employmentStatus;
+            document.getElementById('country').innerHTML = user.country;
+            document.getElementById('phone').innerHTML = `${user.countryCode} ${user.phoneNumber}`;
+            document.getElementById('tradingExperience').innerHTML = user.tradingExperience;
+            document.getElementById('fundsSource').innerHTML = user.fundsSource;
+            document.getElementById('totalDeposits').innerHTML = `$${user.totalDeposits?.toFixed(2) || '0'}`;
+            
+            // Render trades table
+            const tradesList = document.getElementById('tradesList');
+            if (trades && trades.length > 0) {
+                tradesList.innerHTML = trades.slice(0, 20).map(trade => `
+                    <tr>
+                        <td>${trade.symbolName || trade.symbol}</td>
+                        <td><span style="color: ${trade.side === 'buy' ? '#2dd4bf' : '#ff6b6b'}">${trade.side?.toUpperCase() || 'N/A'}</span></td>
+                        <td>$${trade.amount?.toFixed(2) || '0'}</td>
+                        <td>${trade.duration || 'N/A'}</td>
+                        <td class="${trade.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${trade.profit >= 0 ? '+' : ''}$${trade.profit?.toFixed(2) || '0'}</td>
+                        <td>${new Date(trade.endedAt || trade.startedAt).toLocaleDateString()}</td>
+                    </tr>
+                `).join('');
+            } else {
+                tradesList.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px;">No trades yet</td></tr>';
+            }
+            
+            // Create charts
+            createCharts(trades);
+            
+        } catch (error) {
+            console.error('Error loading profile:', error);
+        }
+    }
+    
+    function createCharts(trades) {
+        // Prepare data for profit/loss chart
+        const dates = trades.map(t => new Date(t.endedAt || t.startedAt).toLocaleDateString()).reverse();
+        const profits = trades.map(t => t.profit || 0).reverse();
+        
+        if (profitLossChart) profitLossChart.destroy();
+        const ctx1 = document.getElementById('profitLossChart').getContext('2d');
+        profitLossChart = new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Profit/Loss ($)',
+                    data: profits,
+                    borderColor: '#2dd4bf',
+                    backgroundColor: 'rgba(45, 212, 191, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#e0e3eb' } }
+                }
+            }
+        });
+        
+        // Balance growth chart (mock data from trades)
+        let runningBalance = 1000;
+        const balanceData = [runningBalance];
+        for (let i = 0; i < profits.length; i++) {
+            runningBalance += profits[i];
+            balanceData.push(runningBalance);
+        }
+        
+        if (balanceChart) balanceChart.destroy();
+        const ctx2 = document.getElementById('balanceChart').getContext('2d');
+        balanceChart = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: ['Start', ...dates],
+                datasets: [{
+                    label: 'Balance ($)',
+                    data: balanceData,
+                    borderColor: '#00c6fb',
+                    backgroundColor: 'rgba(0, 198, 251, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#e0e3eb' } }
+                }
+            }
+        });
+    }
+    
+    loadProfile();
+</script>
+</body>
+</html>

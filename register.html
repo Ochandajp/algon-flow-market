@@ -20,7 +20,6 @@
             overflow-x: hidden;
         }
 
-        /* Background Animation */
         .bg-animation {
             position: fixed;
             top: 0;
@@ -39,32 +38,9 @@
             animation: float 20s infinite;
         }
 
-        .orb-1 {
-            width: 500px;
-            height: 500px;
-            background: #2dd4bf;
-            top: -200px;
-            right: -100px;
-        }
-
-        .orb-2 {
-            width: 400px;
-            height: 400px;
-            background: #00c6fb;
-            bottom: -150px;
-            left: -100px;
-            animation-delay: -5s;
-        }
-
-        .orb-3 {
-            width: 300px;
-            height: 300px;
-            background: #764ba2;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation-delay: -10s;
-        }
+        .orb-1 { width: 500px; height: 500px; background: #2dd4bf; top: -200px; right: -100px; }
+        .orb-2 { width: 400px; height: 400px; background: #00c6fb; bottom: -150px; left: -100px; animation-delay: -5s; }
+        .orb-3 { width: 300px; height: 300px; background: #764ba2; top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: -10s; }
 
         @keyframes float {
             0%, 100% { transform: translate(0, 0) scale(1); }
@@ -106,7 +82,6 @@
             font-size: 16px;
         }
 
-        /* Progress Bar */
         .progress-bar {
             display: flex;
             justify-content: space-between;
@@ -171,7 +146,6 @@
             color: #2dd4bf;
         }
 
-        /* Form Sections */
         .form-section {
             display: none;
             animation: fadeIn 0.5s ease;
@@ -251,10 +225,6 @@
             transition: color 0.3s ease;
         }
 
-        .password-toggle:hover {
-            color: #2dd4bf;
-        }
-
         .checkbox-group {
             display: flex;
             align-items: center;
@@ -288,27 +258,12 @@
             text-decoration: none;
         }
 
-        .checkbox-group a:hover {
-            text-decoration: underline;
-        }
-
         .security-note {
             background: rgba(255, 193, 7, 0.1);
             border: 1px solid rgba(255, 193, 7, 0.3);
             border-radius: 12px;
             padding: 15px;
             margin: 20px 0;
-        }
-
-        .security-note p {
-            font-size: 13px;
-            color: #ffc107;
-            margin-bottom: 8px;
-        }
-
-        .security-note small {
-            color: #8a92b0;
-            font-size: 11px;
         }
 
         .button-group {
@@ -333,18 +288,9 @@
             flex: 1;
         }
 
-        .btn-next:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(45, 212, 191, 0.3);
-        }
-
         .btn-back {
             background: #2d3748;
             color: white;
-        }
-
-        .btn-back:hover {
-            background: #3d4858;
         }
 
         .btn-submit {
@@ -352,11 +298,6 @@
             color: #0a0e17;
             width: 100%;
             font-size: 16px;
-        }
-
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(45, 212, 191, 0.3);
         }
 
         .error-message {
@@ -395,70 +336,15 @@
             font-weight: 600;
         }
 
-        .login-link a:hover {
-            text-decoration: underline;
-        }
-
-        /* Loading Spinner */
-        .btn-loading {
-            position: relative;
-            pointer-events: none;
-            opacity: 0.7;
-        }
-
-        .btn-loading::after {
-            content: '';
-            position: absolute;
-            width: 18px;
-            height: 18px;
-            top: 50%;
-            left: 50%;
-            margin-left: -9px;
-            margin-top: -9px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Responsive */
         @media (max-width: 768px) {
-            .register-card {
-                padding: 25px;
-            }
-            .register-card h1 {
-                font-size: 28px;
-            }
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-            .input-group.full-width {
-                grid-column: span 1;
-            }
-            .progress-step .step-label {
-                display: none;
-            }
-            .step-circle {
-                width: 35px;
-                height: 35px;
-                font-size: 14px;
-            }
-            .progress-bar::before {
-                top: 17px;
-            }
-            .button-group {
-                flex-direction: column;
-            }
-            .btn-back {
-                order: 2;
-            }
-            .btn-next {
-                order: 1;
-            }
+            .register-card { padding: 25px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .input-group.full-width { grid-column: span 1; }
+            .progress-step .step-label { display: none; }
+            .step-circle { width: 35px; height: 35px; font-size: 14px; }
+            .button-group { flex-direction: column; }
+            .btn-back { order: 2; }
+            .btn-next { order: 1; }
         }
     </style>
 </head>
@@ -474,11 +360,10 @@
             <h1>Create Account</h1>
             <p class="subtitle">Join the future of AI-powered trading</p>
 
-            <!-- Progress Bar -->
             <div class="progress-bar">
                 <div class="progress-step active" data-step="1">
                     <div class="step-circle">1</div>
-                    <div class="step-label">Personal Info</div>
+                    <div class="step-label">Personal</div>
                 </div>
                 <div class="progress-step" data-step="2">
                     <div class="step-circle">2</div>
@@ -498,7 +383,7 @@
             <div id="successMessage" class="success-message"></div>
 
             <form id="registerForm">
-                <!-- Step 1: Personal Information -->
+                <!-- Step 1 -->
                 <div class="form-section active" data-section="1">
                     <div class="form-grid">
                         <div class="input-group full-width">
@@ -506,7 +391,7 @@
                             <input type="text" id="fullName" required placeholder="John Doe">
                         </div>
                         <div class="input-group">
-                            <label><i class="fas fa-envelope"></i> Email Address <span class="required">*</span></label>
+                            <label><i class="fas fa-envelope"></i> Email <span class="required">*</span></label>
                             <input type="email" id="email" required placeholder="trader@algonflow.com">
                         </div>
                         <div class="input-group">
@@ -530,7 +415,7 @@
                         <div class="input-group">
                             <label><i class="fas fa-briefcase"></i> Employment Status <span class="required">*</span></label>
                             <select id="employmentStatus" required>
-                                <option value="">Select Employment Status</option>
+                                <option value="">Select</option>
                                 <option value="Employed">Employed (Full Time)</option>
                                 <option value="Self-Employed">Self-Employed</option>
                                 <option value="Unemployed">Unemployed</option>
@@ -540,37 +425,168 @@
                         </div>
                     </div>
                     <div class="button-group">
-                        <button type="button" class="btn-next" onclick="nextStep(2)">Next Step →</button>
+                        <button type="button" class="btn-next" onclick="nextStep(2)">Next →</button>
                     </div>
                 </div>
 
-                <!-- Step 2: Location & Contact -->
+                <!-- Step 2: Location -->
                 <div class="form-section" data-section="2">
                     <div class="form-grid">
                         <div class="input-group full-width">
                             <label><i class="fas fa-globe-americas"></i> Country <span class="required">*</span></label>
                             <select id="country" required>
                                 <option value="">Select Country</option>
-                                <option value="United States">🇺🇸 United States</option>
-                                <option value="Canada">🇨🇦 Canada</option>
-                                <option value="United Kingdom">🇬🇧 United Kingdom</option>
-                                <option value="Germany">🇩🇪 Germany</option>
-                                <option value="France">🇫🇷 France</option>
-                                <option value="Spain">🇪🇸 Spain</option>
-                                <option value="Italy">🇮🇹 Italy</option>
-                                <option value="Australia">🇦🇺 Australia</option>
-                                <option value="Nigeria">🇳🇬 Nigeria</option>
-                                <option value="Kenya">🇰🇪 Kenya</option>
-                                <option value="South Africa">🇿🇦 South Africa</option>
-                                <option value="Egypt">🇪🇬 Egypt</option>
-                                <option value="Morocco">🇲🇦 Morocco</option>
-                                <option value="UAE">🇦🇪 United Arab Emirates</option>
-                                <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
-                                <option value="India">🇮🇳 India</option>
-                                <option value="Pakistan">🇵🇰 Pakistan</option>
-                                <option value="Brazil">🇧🇷 Brazil</option>
-                                <option value="Mexico">🇲🇽 Mexico</option>
-                                <option value="Argentina">🇦🇷 Argentina</option>
+                                <optgroup label="🇺🇸 North America">
+                                    <option value="United States">🇺🇸 United States (+1)</option>
+                                    <option value="Canada">🇨🇦 Canada (+1)</option>
+                                    <option value="Mexico">🇲🇽 Mexico (+52)</option>
+                                </optgroup>
+                                <optgroup label="🌎 Central America & Caribbean">
+                                    <option value="Bahamas">🇧🇸 Bahamas (+1)</option>
+                                    <option value="Barbados">🇧🇧 Barbados (+1)</option>
+                                    <option value="Belize">🇧🇿 Belize (+501)</option>
+                                    <option value="Costa Rica">🇨🇷 Costa Rica (+506)</option>
+                                    <option value="Cuba">🇨🇺 Cuba (+53)</option>
+                                    <option value="Dominican Republic">🇩🇴 Dominican Republic (+1)</option>
+                                    <option value="El Salvador">🇸🇻 El Salvador (+503)</option>
+                                    <option value="Guatemala">🇬🇹 Guatemala (+502)</option>
+                                    <option value="Haiti">🇭🇹 Haiti (+509)</option>
+                                    <option value="Honduras">🇭🇳 Honduras (+504)</option>
+                                    <option value="Jamaica">🇯🇲 Jamaica (+1)</option>
+                                    <option value="Nicaragua">🇳🇮 Nicaragua (+505)</option>
+                                    <option value="Panama">🇵🇦 Panama (+507)</option>
+                                    <option value="Puerto Rico">🇵🇷 Puerto Rico (+1)</option>
+                                    <option value="Trinidad and Tobago">🇹🇹 Trinidad and Tobago (+1)</option>
+                                </optgroup>
+                                <optgroup label="🌍 South America">
+                                    <option value="Argentina">🇦🇷 Argentina (+54)</option>
+                                    <option value="Bolivia">🇧🇴 Bolivia (+591)</option>
+                                    <option value="Brazil">🇧🇷 Brazil (+55)</option>
+                                    <option value="Chile">🇨🇱 Chile (+56)</option>
+                                    <option value="Colombia">🇨🇴 Colombia (+57)</option>
+                                    <option value="Ecuador">🇪🇨 Ecuador (+593)</option>
+                                    <option value="Guyana">🇬🇾 Guyana (+592)</option>
+                                    <option value="Paraguay">🇵🇾 Paraguay (+595)</option>
+                                    <option value="Peru">🇵🇪 Peru (+51)</option>
+                                    <option value="Suriname">🇸🇷 Suriname (+597)</option>
+                                    <option value="Uruguay">🇺🇾 Uruguay (+598)</option>
+                                    <option value="Venezuela">🇻🇪 Venezuela (+58)</option>
+                                </optgroup>
+                                <optgroup label="🇪🇺 Europe">
+                                    <option value="United Kingdom">🇬🇧 United Kingdom (+44)</option>
+                                    <option value="Germany">🇩🇪 Germany (+49)</option>
+                                    <option value="France">🇫🇷 France (+33)</option>
+                                    <option value="Italy">🇮🇹 Italy (+39)</option>
+                                    <option value="Spain">🇪🇸 Spain (+34)</option>
+                                    <option value="Portugal">🇵🇹 Portugal (+351)</option>
+                                    <option value="Netherlands">🇳🇱 Netherlands (+31)</option>
+                                    <option value="Belgium">🇧🇪 Belgium (+32)</option>
+                                    <option value="Switzerland">🇨🇭 Switzerland (+41)</option>
+                                    <option value="Austria">🇦🇹 Austria (+43)</option>
+                                    <option value="Sweden">🇸🇪 Sweden (+46)</option>
+                                    <option value="Norway">🇳🇴 Norway (+47)</option>
+                                    <option value="Denmark">🇩🇰 Denmark (+45)</option>
+                                    <option value="Finland">🇫🇮 Finland (+358)</option>
+                                    <option value="Ireland">🇮🇪 Ireland (+353)</option>
+                                    <option value="Poland">🇵🇱 Poland (+48)</option>
+                                    <option value="Czech Republic">🇨🇿 Czech Republic (+420)</option>
+                                    <option value="Greece">🇬🇷 Greece (+30)</option>
+                                    <option value="Turkey">🇹🇷 Turkey (+90)</option>
+                                </optgroup>
+                                <optgroup label="🕌 Arab Countries">
+                                    <option value="Saudi Arabia">🇸🇦 Saudi Arabia (+966)</option>
+                                    <option value="UAE">🇦🇪 United Arab Emirates (+971)</option>
+                                    <option value="Qatar">🇶🇦 Qatar (+974)</option>
+                                    <option value="Kuwait">🇰🇼 Kuwait (+965)</option>
+                                    <option value="Bahrain">🇧🇭 Bahrain (+973)</option>
+                                    <option value="Oman">🇴🇲 Oman (+968)</option>
+                                    <option value="Jordan">🇯🇴 Jordan (+962)</option>
+                                    <option value="Lebanon">🇱🇧 Lebanon (+961)</option>
+                                    <option value="Egypt">🇪🇬 Egypt (+20)</option>
+                                    <option value="Morocco">🇲🇦 Morocco (+212)</option>
+                                    <option value="Algeria">🇩🇿 Algeria (+213)</option>
+                                    <option value="Tunisia">🇹🇳 Tunisia (+216)</option>
+                                    <option value="Libya">🇱🇾 Libya (+218)</option>
+                                    <option value="Sudan">🇸🇩 Sudan (+249)</option>
+                                    <option value="Iraq">🇮🇶 Iraq (+964)</option>
+                                    <option value="Syria">🇸🇾 Syria (+963)</option>
+                                    <option value="Palestine">🇵🇸 Palestine (+970)</option>
+                                    <option value="Yemen">🇾🇪 Yemen (+967)</option>
+                                </optgroup>
+                                <optgroup label="🌍 Africa - East Africa">
+                                    <option value="Kenya">🇰🇪 Kenya (+254)</option>
+                                    <option value="Tanzania">🇹🇿 Tanzania (+255)</option>
+                                    <option value="Uganda">🇺🇬 Uganda (+256)</option>
+                                    <option value="Ethiopia">🇪🇹 Ethiopia (+251)</option>
+                                    <option value="Somalia">🇸🇴 Somalia (+252)</option>
+                                    <option value="Rwanda">🇷🇼 Rwanda (+250)</option>
+                                    <option value="Burundi">🇧🇮 Burundi (+257)</option>
+                                    <option value="South Sudan">🇸🇸 South Sudan (+211)</option>
+                                    <option value="Djibouti">🇩🇯 Djibouti (+253)</option>
+                                    <option value="Eritrea">🇪🇷 Eritrea (+291)</option>
+                                </optgroup>
+                                <optgroup label="🌍 Africa - West Africa">
+                                    <option value="Nigeria">🇳🇬 Nigeria (+234)</option>
+                                    <option value="Ghana">🇬🇭 Ghana (+233)</option>
+                                    <option value="Ivory Coast">🇨🇮 Ivory Coast (+225)</option>
+                                    <option value="Senegal">🇸🇳 Senegal (+221)</option>
+                                    <option value="Mali">🇲🇱 Mali (+223)</option>
+                                    <option value="Burkina Faso">🇧🇫 Burkina Faso (+226)</option>
+                                    <option value="Benin">🇧🇯 Benin (+229)</option>
+                                    <option value="Togo">🇹🇬 Togo (+228)</option>
+                                    <option value="Guinea">🇬🇳 Guinea (+224)</option>
+                                    <option value="Sierra Leone">🇸🇱 Sierra Leone (+232)</option>
+                                    <option value="Liberia">🇱🇷 Liberia (+231)</option>
+                                    <option value="Gambia">🇬🇲 Gambia (+220)</option>
+                                    <option value="Guinea-Bissau">🇬🇼 Guinea-Bissau (+245)</option>
+                                    <option value="Cape Verde">🇨🇻 Cape Verde (+238)</option>
+                                </optgroup>
+                                <optgroup label="🌍 Africa - Southern Africa">
+                                    <option value="South Africa">🇿🇦 South Africa (+27)</option>
+                                    <option value="Zambia">🇿🇲 Zambia (+260)</option>
+                                    <option value="Zimbabwe">🇿🇼 Zimbabwe (+263)</option>
+                                    <option value="Mozambique">🇲🇿 Mozambique (+258)</option>
+                                    <option value="Angola">🇦🇴 Angola (+244)</option>
+                                    <option value="Namibia">🇳🇦 Namibia (+264)</option>
+                                    <option value="Botswana">🇧🇼 Botswana (+267)</option>
+                                    <option value="Malawi">🇲🇼 Malawi (+265)</option>
+                                    <option value="Lesotho">🇱🇸 Lesotho (+266)</option>
+                                    <option value="Eswatini">🇸🇿 Eswatini (+268)</option>
+                                    <option value="Madagascar">🇲🇬 Madagascar (+261)</option>
+                                    <option value="Mauritius">🇲🇺 Mauritius (+230)</option>
+                                </optgroup>
+                                <optgroup label="🌍 Africa - North Africa">
+                                    <option value="Morocco">🇲🇦 Morocco (+212)</option>
+                                    <option value="Algeria">🇩🇿 Algeria (+213)</option>
+                                    <option value="Tunisia">🇹🇳 Tunisia (+216)</option>
+                                    <option value="Libya">🇱🇾 Libya (+218)</option>
+                                    <option value="Egypt">🇪🇬 Egypt (+20)</option>
+                                    <option value="Sudan">🇸🇩 Sudan (+249)</option>
+                                    <option value="Mauritania">🇲🇷 Mauritania (+222)</option>
+                                </optgroup>
+                                <optgroup label="🌏 Asia">
+                                    <option value="Pakistan">🇵🇰 Pakistan (+92)</option>
+                                    <option value="Bangladesh">🇧🇩 Bangladesh (+880)</option>
+                                    <option value="India">🇮🇳 India (+91)</option>
+                                    <option value="Sri Lanka">🇱🇰 Sri Lanka (+94)</option>
+                                    <option value="Nepal">🇳🇵 Nepal (+977)</option>
+                                    <option value="Maldives">🇲🇻 Maldives (+960)</option>
+                                    <option value="China">🇨🇳 China (+86)</option>
+                                    <option value="Japan">🇯🇵 Japan (+81)</option>
+                                    <option value="South Korea">🇰🇷 South Korea (+82)</option>
+                                    <option value="Indonesia">🇮🇩 Indonesia (+62)</option>
+                                    <option value="Malaysia">🇲🇾 Malaysia (+60)</option>
+                                    <option value="Singapore">🇸🇬 Singapore (+65)</option>
+                                    <option value="Thailand">🇹🇭 Thailand (+66)</option>
+                                    <option value="Vietnam">🇻🇳 Vietnam (+84)</option>
+                                    <option value="Philippines">🇵🇭 Philippines (+63)</option>
+                                </optgroup>
+                                <optgroup label="🌏 Oceania">
+                                    <option value="Australia">🇦🇺 Australia (+61)</option>
+                                    <option value="New Zealand">🇳🇿 New Zealand (+64)</option>
+                                    <option value="Fiji">🇫🇯 Fiji (+679)</option>
+                                    <option value="Papua New Guinea">🇵🇬 Papua New Guinea (+675)</option>
+                                </optgroup>
                             </select>
                         </div>
                         <div class="input-group">
@@ -594,28 +610,52 @@
                                 <option value="+34">+34 (Spain)</option>
                                 <option value="+39">+39 (Italy)</option>
                                 <option value="+61">+61 (Australia)</option>
-                                <option value="+234">+234 (Nigeria)</option>
-                                <option value="+254">+254 (Kenya)</option>
-                                <option value="+27">+27 (South Africa)</option>
-                                <option value="+20">+20 (Egypt)</option>
-                                <option value="+212">+212 (Morocco)</option>
-                                <option value="+971">+971 (UAE)</option>
-                                <option value="+966">+966 (Saudi Arabia)</option>
-                                <option value="+91">+91 (India)</option>
-                                <option value="+92">+92 (Pakistan)</option>
                                 <option value="+55">+55 (Brazil)</option>
                                 <option value="+52">+52 (Mexico)</option>
                                 <option value="+54">+54 (Argentina)</option>
+                                <option value="+57">+57 (Colombia)</option>
+                                <option value="+234">+234 (Nigeria)</option>
+                                <option value="+254">+254 (Kenya)</option>
+                                <option value="+255">+255 (Tanzania)</option>
+                                <option value="+256">+256 (Uganda)</option>
+                                <option value="+260">+260 (Zambia)</option>
+                                <option value="+263">+263 (Zimbabwe)</option>
+                                <option value="+27">+27 (South Africa)</option>
+                                <option value="+20">+20 (Egypt)</option>
+                                <option value="+212">+212 (Morocco)</option>
+                                <option value="+213">+213 (Algeria)</option>
+                                <option value="+216">+216 (Tunisia)</option>
+                                <option value="+966">+966 (Saudi Arabia)</option>
+                                <option value="+971">+971 (UAE)</option>
+                                <option value="+974">+974 (Qatar)</option>
+                                <option value="+965">+965 (Kuwait)</option>
+                                <option value="+973">+973 (Bahrain)</option>
+                                <option value="+968">+968 (Oman)</option>
+                                <option value="+962">+962 (Jordan)</option>
+                                <option value="+961">+961 (Lebanon)</option>
+                                <option value="+92">+92 (Pakistan)</option>
+                                <option value="+91">+91 (India)</option>
+                                <option value="+880">+880 (Bangladesh)</option>
+                                <option value="+86">+86 (China)</option>
+                                <option value="+81">+81 (Japan)</option>
+                                <option value="+82">+82 (South Korea)</option>
+                                <option value="+62">+62 (Indonesia)</option>
+                                <option value="+60">+60 (Malaysia)</option>
+                                <option value="+65">+65 (Singapore)</option>
+                                <option value="+66">+66 (Thailand)</option>
+                                <option value="+84">+84 (Vietnam)</option>
+                                <option value="+63">+63 (Philippines)</option>
+                                <option value="+64">+64 (New Zealand)</option>
                             </select>
                         </div>
                     </div>
                     <div class="button-group">
                         <button type="button" class="btn-back" onclick="prevStep(1)">← Back</button>
-                        <button type="button" class="btn-next" onclick="nextStep(3)">Next Step →</button>
+                        <button type="button" class="btn-next" onclick="nextStep(3)">Next →</button>
                     </div>
                 </div>
 
-                <!-- Step 3: Financial Information -->
+                <!-- Step 3: Financial -->
                 <div class="form-section" data-section="3">
                     <div class="form-grid">
                         <div class="input-group full-width">
@@ -653,15 +693,15 @@
                     </div>
                     <div class="security-note">
                         <p><i class="fas fa-shield-alt"></i> Required for Security & Compliance (KYC/AML)</p>
-                        <small>This information is required for regulatory compliance. Your data is encrypted and protected.</small>
+                        <small>Your data is encrypted and protected.</small>
                     </div>
                     <div class="button-group">
                         <button type="button" class="btn-back" onclick="prevStep(2)">← Back</button>
-                        <button type="button" class="btn-next" onclick="nextStep(4)">Next Step →</button>
+                        <button type="button" class="btn-next" onclick="nextStep(4)">Next →</button>
                     </div>
                 </div>
 
-                <!-- Step 4: Security & Terms -->
+                <!-- Step 4: Terms -->
                 <div class="form-section" data-section="4">
                     <div class="form-grid">
                         <div class="input-group full-width">
@@ -673,19 +713,19 @@
                         <div class="input-group full-width">
                             <div class="checkbox-group">
                                 <input type="checkbox" id="termsAccepted" required>
-                                <label>I confirm that I have read and agree to the <a href="#" target="_blank">Terms and Conditions</a> and <a href="#">Privacy Policy</a> <span class="required">*</span></label>
+                                <label>I agree to the <a href="#">Terms and Conditions</a> and <a href="#">Privacy Policy</a> <span class="required">*</span></label>
                             </div>
                         </div>
                         <div class="input-group full-width">
                             <div class="checkbox-group">
                                 <input type="checkbox" id="riskAcknowledged" required>
-                                <label>I acknowledge that trading involves significant risk and I may lose my entire investment <span class="required">*</span></label>
+                                <label>I acknowledge that trading involves significant risk <span class="required">*</span></label>
                             </div>
                         </div>
                     </div>
                     <div class="button-group">
                         <button type="button" class="btn-back" onclick="prevStep(3)">← Back</button>
-                        <button type="submit" class="btn-submit" id="submitBtn">Create Account & Start Trading →</button>
+                        <button type="submit" class="btn-submit" id="submitBtn">Create Account →</button>
                     </div>
                 </div>
             </form>
@@ -715,7 +755,6 @@
         }
 
         function nextStep(step) {
-            // Validate current step
             if (currentStep === 1) {
                 const fullName = document.getElementById('fullName').value;
                 const email = document.getElementById('email').value;
@@ -728,22 +767,10 @@
                     showError('Please fill in all required fields');
                     return;
                 }
-                if (age < 18) {
-                    showError('You must be at least 18 years old');
-                    return;
-                }
-                if (password.length < 6) {
-                    showError('Password must be at least 6 characters');
-                    return;
-                }
-                if (password !== confirmPassword) {
-                    showError('Passwords do not match');
-                    return;
-                }
-                if (!email.includes('@')) {
-                    showError('Please enter a valid email address');
-                    return;
-                }
+                if (age < 18) { showError('You must be at least 18 years old'); return; }
+                if (password.length < 6) { showError('Password must be at least 6 characters'); return; }
+                if (password !== confirmPassword) { showError('Passwords do not match'); return; }
+                if (!email.includes('@')) { showError('Please enter a valid email address'); return; }
             }
 
             if (currentStep === 2) {
@@ -764,7 +791,6 @@
                 }
             }
 
-            // Update UI
             document.querySelector(`.form-section[data-section="${currentStep}"]`).classList.remove('active');
             document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.remove('active');
             document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.add('completed');
@@ -795,18 +821,9 @@
             setTimeout(() => errorDiv.style.display = 'none', 4000);
         }
 
-        function showSuccess(message) {
-            const successDiv = document.getElementById('successMessage');
-            successDiv.textContent = message;
-            successDiv.style.display = 'block';
-            setTimeout(() => successDiv.style.display = 'none', 4000);
-        }
-
-        // Handle form submission
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // Final validation
             if (!document.getElementById('ageConfirm').checked) {
                 showError('You must confirm that you are at least 18 years old');
                 return;
@@ -821,8 +838,8 @@
             }
             
             const submitBtn = document.getElementById('submitBtn');
-            submitBtn.classList.add('btn-loading');
             submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Creating Account...';
             
             const formData = {
                 fullName: document.getElementById('fullName').value,
@@ -852,19 +869,20 @@
                 if (data.success) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    showSuccess('Account created successfully! Redirecting to dashboard...');
+                    document.getElementById('successMessage').style.display = 'block';
+                    document.getElementById('successMessage').textContent = 'Account created! Redirecting...';
                     setTimeout(() => {
                         window.location.href = data.user.isAdmin ? 'admin.html' : 'dashboard.html';
                     }, 2000);
                 } else {
                     showError(data.error || 'Registration failed');
-                    submitBtn.classList.remove('btn-loading');
                     submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Create Account →';
                 }
             } catch (error) {
                 showError('Connection error. Please try again.');
-                submitBtn.classList.remove('btn-loading');
                 submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Create Account →';
             }
         });
     </script>

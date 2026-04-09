@@ -10,7 +10,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         body {
@@ -19,7 +19,6 @@
             overflow-x: hidden;
         }
 
-        /* Enable pinch zoom on mobile */
         html {
             touch-action: pan-x pan-y;
         }
@@ -30,6 +29,7 @@
             flex-direction: column;
         }
 
+        /* Top Navigation */
         .top-nav {
             background: #0f1322;
             border-bottom: 1px solid #1e2538;
@@ -122,6 +122,7 @@
             color: #2dd4bf;
         }
 
+        /* Main Trading Area */
         .main-trading-area {
             display: flex;
             flex: 1;
@@ -504,39 +505,102 @@
             color: #ff6b6b;
         }
 
-        .drawer {
+        /* Drawer - Collapsible Hot Assets */
+        .hot-assets-drawer {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: #0f1322;
-            border-top: 1px solid #2dd4bf;
-            padding: 15px;
-            transform: translateY(100%);
+            background: linear-gradient(180deg, #0f1322 0%, #1a1f30 100%);
+            border-top: 2px solid #2dd4bf;
+            border-radius: 20px 20px 0 0;
             transition: transform 0.3s ease;
             z-index: 1000;
             max-height: 50vh;
             overflow-y: auto;
+            transform: translateY(calc(100% - 50px));
         }
 
-        .drawer.open {
+        .hot-assets-drawer.open {
             transform: translateY(0);
         }
 
-        .drawer-toggle {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #2dd4bf;
-            color: #0a0e17;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 24px;
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #1a1f30;
+            border-radius: 20px 20px 0 0;
             cursor: pointer;
-            z-index: 1001;
-            box-shadow: 0 4px 15px rgba(45,212,191,0.3);
+            border-bottom: 1px solid #2dd4bf;
+        }
+
+        .drawer-header h4 {
+            color: #2dd4bf;
+            font-size: 16px;
+        }
+
+        .drawer-header h4 i {
+            margin-right: 8px;
+        }
+
+        .drawer-toggle-icon {
+            font-size: 20px;
+            transition: transform 0.3s ease;
+            color: #2dd4bf;
+        }
+
+        .hot-assets-drawer.open .drawer-toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .drawer-content {
+            padding: 15px 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .asset-item {
+            background: #0f1322;
+            border-radius: 10px;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 3px solid #2dd4bf;
+        }
+
+        .asset-symbol {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .asset-name {
+            font-size: 10px;
+            color: #8a92b0;
+        }
+
+        .asset-change {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .asset-change.positive {
+            color: #00d4aa;
+        }
+
+        .asset-change.negative {
+            color: #ff6b6b;
+        }
+
+        .ai-banner {
+            background: linear-gradient(135deg, #1e3a5f, #0f172a);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #2dd4bf;
         }
 
         @media (max-width: 768px) {
@@ -556,6 +620,9 @@
             .current-price {
                 font-size: 20px;
             }
+            .drawer-content {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -571,6 +638,7 @@
             <button class="nav-btn active" data-page="dashboard">Trade</button>
             <button class="nav-btn" data-page="portfolio">Portfolio</button>
             <button class="nav-btn" data-page="history">History</button>
+            <button class="nav-btn" data-page="profile">Profile</button>
         </div>
         <div class="action-buttons">
             <button class="action-btn deposit" id="depositBtn"><i class="fas fa-plus-circle"></i> Deposit</button>
@@ -615,9 +683,9 @@
                 <!-- AI Trading Panel -->
                 <div id="aiOrderPanel">
                     <div class="api-key-section">
-                        <label style="font-size: 12px; color: #8a92b0;">🔑 AI API Key (Generate from Admin Panel)</label>
-                        <input type="text" id="aiApiKey" class="api-key-input" placeholder="Enter your AI API Key">
-                        <button class="start-ai-btn" id="saveApiKeyBtn"><i class="fas fa-key"></i> Save API Key</button>
+                        <label style="font-size: 12px; color: #8a92b0;">🔑 AI Passkey</label>
+                        <input type="password" id="aiPasskey" class="api-key-input" placeholder="Enter your AI Passkey">
+                        <button class="start-ai-btn" id="savePasskeyBtn"><i class="fas fa-key"></i> Save Passkey</button>
                     </div>
 
                     <input type="number" id="aiAmount" class="trade-input" placeholder="Investment Amount (USD)" step="100">
@@ -692,21 +760,23 @@
                 </div>
             </div>
 
-            <div class="ai-banner" style="background: linear-gradient(135deg, #1e3a5f, #0f172a); border-radius: 12px; padding: 12px; text-align: center; border: 1px solid #2dd4bf;">
+            <div class="ai-banner">
                 <i class="fas fa-robot"></i> AI Status: <span id="aiStatus">Ready</span><br>
-                <small>Verified: <span id="verifiedStatus">No</span> | Balance: $<span id="aiBalance">0</span></small>
+                <small>Balance: $<span id="aiBalance">0</span></small>
                 <div id="aiSignal" style="font-size: 11px; margin-top: 5px;"></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Drawer for top assets -->
-<div class="drawer" id="drawer">
-    <h4 style="margin-bottom: 10px;"><i class="fas fa-fire" style="color: #ff6b6b;"></i> Hot Assets 🔥</h4>
-    <div id="drawerAssets"></div>
+<!-- Hot Assets Drawer - Collapsible -->
+<div class="hot-assets-drawer" id="hotAssetsDrawer">
+    <div class="drawer-header" id="drawerHeader">
+        <h4><i class="fas fa-fire" style="color: #ff6b6b;"></i> Hot Assets 🔥</h4>
+        <i class="fas fa-chevron-up drawer-toggle-icon"></i>
+    </div>
+    <div class="drawer-content" id="drawerAssets"></div>
 </div>
-<button class="drawer-toggle" id="drawerToggle"><i class="fas fa-chart-simple"></i></button>
 
 <script>
     const API_URL = window.location.origin;
@@ -726,9 +796,8 @@
     let userData = null;
     let activeTrades = [];
     let tradeHistory = [];
-    let refreshInterval = null;
     
-    // Market Data - Updated (removed EOS, MKR, Copper, Corn, Soy, Sugar, Coffee)
+    // Market Data
     const marketCategories = {
         crypto: [
             { symbol: "BTCUSDT", name: "Bitcoin" },
@@ -810,10 +879,9 @@
             userData = data.user;
             document.getElementById('userBalance').innerHTML = userData.balance.toFixed(2);
             document.getElementById('aiBalance').innerHTML = userData.balance.toFixed(2);
-            document.getElementById('verifiedStatus').innerHTML = userData.isVerified ? '<span style="color:#2dd4bf;">✓ Verified</span>' : '<span style="color:#ff6b6b;">Not Verified</span>';
             
             if (userData.aiApiKey) {
-                document.getElementById('aiApiKey').value = userData.aiApiKey;
+                document.getElementById('aiPasskey').value = userData.aiApiKey;
             }
             
             activeTrades = data.activeTrades || [];
@@ -874,12 +942,17 @@
     function updateDrawerAssets() {
         const assets = Object.entries(marketPrices)
             .sort((a, b) => b[1].change - a[1].change)
-            .slice(0, 10);
+            .slice(0, 12);
         
         document.getElementById('drawerAssets').innerHTML = assets.map(([symbol, data]) => `
-            <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #1e2538;">
-                <span><strong>${symbol.replace('USDT', '')}</strong> <small>${data.name}</small></span>
-                <span style="color: ${data.change >= 0 ? '#00d4aa' : '#ff6b6b'}">${data.change >= 0 ? '+' : ''}${data.change.toFixed(2)}%</span>
+            <div class="asset-item" onclick="switchMarket('${symbol}', '${data.name}')" style="cursor:pointer;">
+                <div>
+                    <div class="asset-symbol">${symbol.replace('USDT', '').replace('XAU', 'Gold').replace('XAG', 'Silver')}</div>
+                    <div class="asset-name">${data.name}</div>
+                </div>
+                <div class="asset-change ${data.change >= 0 ? 'positive' : 'negative'}">
+                    ${data.change >= 0 ? '+' : ''}${data.change.toFixed(2)}%
+                </div>
             </div>
         `).join('');
     }
@@ -925,39 +998,34 @@
         }
     }
     
-    async function saveApiKey() {
-        const apiKey = document.getElementById('aiApiKey').value;
-        if (!apiKey) {
-            showMessage('Please enter an API Key', 'error');
+    async function savePasskey() {
+        const passkey = document.getElementById('aiPasskey').value;
+        if (!passkey) {
+            showMessage('Please enter your AI Passkey', 'error');
             return;
         }
         
         try {
-            const response = await fetch(`${API_URL}/api/ai/set-api-key`, {
+            const response = await fetch(`${API_URL}/api/ai/save-passkey`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ apiKey })
+                body: JSON.stringify({ passkey })
             });
             const data = await response.json();
             if (data.success) {
-                showMessage('API Key saved successfully!', 'success');
+                showMessage('Passkey saved successfully!', 'success');
                 fetchUserProfile();
             } else {
                 showMessage(data.error, 'error');
             }
         } catch (error) {
-            showMessage('Error saving API Key', 'error');
+            showMessage('Error saving passkey', 'error');
         }
     }
     
     async function startAITrade(side) {
         const amount = parseFloat(document.getElementById('aiAmount').value);
-        const apiKey = document.getElementById('aiApiKey').value;
-        
-        if (!userData?.isVerified && userData?.balance < 115) {
-            showMessage('Need minimum $115 balance or verified status to use AI trading. Please deposit funds.', 'error');
-            return;
-        }
+        const passkey = document.getElementById('aiPasskey').value;
         
         if (!amount || amount < 80) {
             showMessage('Minimum investment is $80 USD', 'error');
@@ -969,8 +1037,8 @@
             return;
         }
         
-        if (!apiKey) {
-            showMessage('Please save your AI API Key first', 'error');
+        if (!passkey) {
+            showMessage('Please save your AI Passkey first', 'error');
             return;
         }
         
@@ -986,12 +1054,12 @@
                     leverage: currentLeverage,
                     duration: currentDuration,
                     durationMs: currentDurationMs,
-                    apiKey: apiKey
+                    passkey: passkey
                 })
             });
             const data = await response.json();
             if (data.success) {
-                showMessage(`AI ${side.toUpperCase()} trade started! Analysis: ${data.analysis.analysis}`, 'success');
+                showMessage(`AI ${side.toUpperCase()} trade started! ${data.analysis.analysis}`, 'success');
                 document.getElementById('aiAmount').value = '';
                 fetchUserProfile();
                 setTimeout(() => fetchUserProfile(), 5000);
@@ -1069,12 +1137,25 @@
         setTimeout(() => msgDiv.innerHTML = '', 5000);
     }
     
+    // Drawer toggle
+    const drawer = document.getElementById('hotAssetsDrawer');
+    const drawerHeader = document.getElementById('drawerHeader');
+    drawerHeader.onclick = () => {
+        drawer.classList.toggle('open');
+    };
+    
     // Navigation
     document.querySelectorAll(".nav-btn").forEach(btn => {
         btn.onclick = () => {
             document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
             let page = btn.dataset.page;
+            
+            if (page === 'profile') {
+                window.location.href = 'profile.html';
+                return;
+            }
+            
             document.getElementById("dashboardPage").style.display = page === "dashboard" ? "flex" : "none";
             document.getElementById("portfolioPage").style.display = page === "portfolio" ? "block" : "none";
             document.getElementById("historyPage").style.display = page === "history" ? "block" : "none";
@@ -1126,16 +1207,11 @@
         };
     });
     
-    document.getElementById("saveApiKeyBtn").onclick = saveApiKey;
+    document.getElementById("savePasskeyBtn").onclick = savePasskey;
     document.getElementById("startAIBuyBtn").onclick = () => startAITrade('buy');
     document.getElementById("startAISellBtn").onclick = () => startAITrade('sell');
     document.getElementById("depositBtn").onclick = () => window.location.href = 'deposit.html';
     document.getElementById("withdrawBtn").onclick = () => window.location.href = 'withdraw.html';
-    
-    // Drawer toggle
-    document.getElementById("drawerToggle").onclick = () => {
-        document.getElementById("drawer").classList.toggle("open");
-    };
     
     // Load TradingView
     const script = document.createElement('script');
