@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Create Account | Algon Flow Market</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0e17 0%, #0f1322 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background Animation */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-animation .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: float 20s infinite;
+        }
+
+        .orb-1 {
+            width: 500px;
+            height: 500px;
+            background: #2dd4bf;
+            top: -200px;
+            right: -100px;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: #00c6fb;
+            bottom: -150px;
+            left: -100px;
+            animation-delay: -5s;
+        }
+
+        .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: #764ba2;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        .register-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 100px 20px 60px;
+        }
+
+        .register-card {
+            background: rgba(15, 19, 34, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            padding: 45px;
+            border: 1px solid rgba(45, 212, 191, 0.3);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .register-card h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-align: center;
+            background: linear-gradient(135deg, #fff, #2dd4bf, #00c6fb);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .register-card .subtitle {
+            text-align: center;
+            color: #8a92b0;
+            margin-bottom: 35px;
+            font-size: 16px;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 45px;
+            position: relative;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #2d3748;
+            z-index: 0;
+        }
+
+        .progress-step {
+            position: relative;
+            z-index: 1;
+            background: #0f1322;
+            padding: 0 10px;
+            text-align: center;
+        }
+
+        .step-circle {
+            width: 45px;
+            height: 45px;
+            background: #1a1f30;
+            border: 2px solid #2d3748;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: 700;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active .step-circle {
+            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
+            border-color: #2dd4bf;
+            color: #0a0e17;
+            box-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
+        }
+
+        .progress-step.completed .step-circle {
+            background: #00d4aa;
+            border-color: #00d4aa;
+            color: #0a0e17;
+        }
+
+        .step-label {
+            font-size: 12px;
+            color: #8a92b0;
+            font-weight: 500;
+        }
+
+        .progress-step.active .step-label {
+            color: #2dd4bf;
+        }
+
+        /* Form Sections */
+        .form-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group.full-width {
+            grid-column: span 2;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #e0e3eb;
+            font-weight: 500;
+        }
+
+        .input-group label i {
+            margin-right: 6px;
+            color: #2dd4bf;
+        }
+
+        .required {
+            color: #ff6b6b;
+        }
+
+        .input-group input, 
+        .input-group select, 
+        .input-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: #1a1f30;
+            border: 1px solid #2d3748;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus, 
+        .input-group select:focus {
+            outline: none;
+            border-color: #2dd4bf;
+            box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1);
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #8a92b0;
+            transition: color 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            color: #2dd4bf;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            background: rgba(45, 212, 191, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(45, 212, 191, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-group:hover {
+            border-color: #2dd4bf;
+        }
+
+        .checkbox-group input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #2dd4bf;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .checkbox-group a {
+            color: #2dd4bf;
+            text-decoration: none;
+        }
+
+        .checkbox-group a:hover {
+            text-decoration: underline;
+        }
+
+        .security-note {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .security-note p {
+            font-size: 13px;
+            color: #ffc107;
+            margin-bottom: 8px;
+        }
+
+        .security-note small {
+            color: #8a92b0;
+            font-size: 11px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-next, .btn-back, .btn-submit {
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 14px;
+        }
+
+        .btn-next {
+            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
+            color: #0a0e17;
+            flex: 1;
+        }
+
+        .btn-next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(45, 212, 191, 0.3);
+        }
+
+        .btn-back {
+            background: #2d3748;
+            color: white;
+        }
+
+        .btn-back:hover {
+            background: #3d4858;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
+            color: #0a0e17;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(45, 212, 191, 0.3);
+        }
+
+        .error-message {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid #ff6b6b;
+            color: #ff6b6b;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(45, 212, 191, 0.1);
+            border: 1px solid #2dd4bf;
+            color: #2dd4bf;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: #8a92b0;
+        }
+
+        .login-link a {
+            color: #2dd4bf;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* Loading Spinner */
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            top: 50%;
+            left: 50%;
+            margin-left: -9px;
+            margin-top: -9px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .register-card {
+                padding: 25px;
+            }
+            .register-card h1 {
+                font-size: 28px;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .input-group.full-width {
+                grid-column: span 1;
+            }
+            .progress-step .step-label {
+                display: none;
+            }
+            .step-circle {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+            .progress-bar::before {
+                top: 17px;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+            .btn-back {
+                order: 2;
+            }
+            .btn-next {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="register-container">
+        <div class="register-card">
+            <h1>Create Account</h1>
+            <p class="subtitle">Join the future of AI-powered trading</p>
+
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+                <div class="progress-step active" data-step="1">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Personal Info</div>
+                </div>
+                <div class="progress-step" data-step="2">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Location</div>
+                </div>
+                <div class="progress-step" data-step="3">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Financial</div>
+                </div>
+                <div class="progress-step" data-step="4">
+                    <div class="step-circle">4</div>
+                    <div class="step-label">Security</div>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+
+            <form id="registerForm">
+                <!-- Step 1: Personal Information -->
+                <div class="form-section active" data-section="1">
+                    <div class="form-grid">
+                        <div class="input-group full-width">
+                            <label><i class="fas fa-user"></i> Full Name <span class="required">*</span></label>
+                            <input type="text" id="fullName" required placeholder="John Doe">
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-envelope"></i> Email Address <span class="required">*</span></label>
+                            <input type="email" id="email" required placeholder="trader@algonflow.com">
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-calendar-alt"></i> Age <span class="required">*</span></label>
+                            <input type="number" id="age" required placeholder="25" min="18">
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-lock"></i> Password <span class="required">*</span></label>
+                            <div class="password-wrapper">
+                                <input type="password" id="password" required placeholder="Min 6 characters">
+                                <i class="fas fa-eye password-toggle" onclick="togglePassword('password')"></i>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-lock"></i> Confirm Password <span class="required">*</span></label>
+                            <div class="password-wrapper">
+                                <input type="password" id="confirmPassword" required placeholder="Confirm password">
+                                <i class="fas fa-eye password-toggle" onclick="togglePassword('confirmPassword')"></i>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-briefcase"></i> Employment Status <span class="required">*</span></label>
+                            <select id="employmentStatus" required>
+                                <option value="">Select Employment Status</option>
+                                <option value="Employed">Employed (Full Time)</option>
+                                <option value="Self-Employed">Self-Employed</option>
+                                <option value="Unemployed">Unemployed</option>
+                                <option value="Student">Student</option>
+                                <option value="Retired">Retired</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="btn-next" onclick="nextStep(2)">Next Step →</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Location & Contact -->
+                <div class="form-section" data-section="2">
+                    <div class="form-grid">
+                        <div class="input-group full-width">
+                            <label><i class="fas fa-globe-americas"></i> Country <span class="required">*</span></label>
+                            <select id="country" required>
+                                <option value="">Select Country</option>
+                                <option value="United States">🇺🇸 United States</option>
+                                <option value="Canada">🇨🇦 Canada</option>
+                                <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                                <option value="Germany">🇩🇪 Germany</option>
+                                <option value="France">🇫🇷 France</option>
+                                <option value="Spain">🇪🇸 Spain</option>
+                                <option value="Italy">🇮🇹 Italy</option>
+                                <option value="Australia">🇦🇺 Australia</option>
+                                <option value="Nigeria">🇳🇬 Nigeria</option>
+                                <option value="Kenya">🇰🇪 Kenya</option>
+                                <option value="South Africa">🇿🇦 South Africa</option>
+                                <option value="Egypt">🇪🇬 Egypt</option>
+                                <option value="Morocco">🇲🇦 Morocco</option>
+                                <option value="UAE">🇦🇪 United Arab Emirates</option>
+                                <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
+                                <option value="India">🇮🇳 India</option>
+                                <option value="Pakistan">🇵🇰 Pakistan</option>
+                                <option value="Brazil">🇧🇷 Brazil</option>
+                                <option value="Mexico">🇲🇽 Mexico</option>
+                                <option value="Argentina">🇦🇷 Argentina</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-flag-usa"></i> Are you from the US? <span class="required">*</span></label>
+                            <select id="isFromUSA" required>
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-phone"></i> Phone Number <span class="required">*</span></label>
+                            <input type="tel" id="phoneNumber" required placeholder="Phone number">
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-code"></i> Country Code</label>
+                            <select id="countryCode">
+                                <option value="+1">+1 (US/CA)</option>
+                                <option value="+44">+44 (UK)</option>
+                                <option value="+49">+49 (Germany)</option>
+                                <option value="+33">+33 (France)</option>
+                                <option value="+34">+34 (Spain)</option>
+                                <option value="+39">+39 (Italy)</option>
+                                <option value="+61">+61 (Australia)</option>
+                                <option value="+234">+234 (Nigeria)</option>
+                                <option value="+254">+254 (Kenya)</option>
+                                <option value="+27">+27 (South Africa)</option>
+                                <option value="+20">+20 (Egypt)</option>
+                                <option value="+212">+212 (Morocco)</option>
+                                <option value="+971">+971 (UAE)</option>
+                                <option value="+966">+966 (Saudi Arabia)</option>
+                                <option value="+91">+91 (India)</option>
+                                <option value="+92">+92 (Pakistan)</option>
+                                <option value="+55">+55 (Brazil)</option>
+                                <option value="+52">+52 (Mexico)</option>
+                                <option value="+54">+54 (Argentina)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="btn-back" onclick="prevStep(1)">← Back</button>
+                        <button type="button" class="btn-next" onclick="nextStep(3)">Next Step →</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Financial Information -->
+                <div class="form-section" data-section="3">
+                    <div class="form-grid">
+                        <div class="input-group full-width">
+                            <label><i class="fas fa-chart-bar"></i> Trading Experience <span class="required">*</span></label>
+                            <select id="tradingExperience" required>
+                                <option value="">Select Experience Level</option>
+                                <option value="Beginner">Beginner - New to trading</option>
+                                <option value="Intermediate">Intermediate - Some experience</option>
+                                <option value="Expert">Expert - Professional trader</option>
+                            </select>
+                        </div>
+                        <div class="input-group full-width">
+                            <label><i class="fas fa-money-bill-wave"></i> Source of Funds <span class="required">*</span></label>
+                            <select id="fundsSource" required>
+                                <option value="">Select Source of Funds</option>
+                                <option value="Personal Savings">💰 Personal Savings</option>
+                                <option value="Business Revenue">🏢 Business Revenue</option>
+                                <option value="Inheritance or Gift">🎁 Inheritance or Gift</option>
+                                <option value="Loan Proceeds">🏦 Loan Proceeds</option>
+                                <option value="Investment from Partners/Investors">🤝 Investment from Partners/Investors</option>
+                                <option value="Sale of Assets">🏠 Sale of Assets</option>
+                            </select>
+                        </div>
+                        <div class="input-group full-width">
+                            <label><i class="fas fa-dollar-sign"></i> Expected Initial Deposit (USD)</label>
+                            <select id="expectedDeposit">
+                                <option value="0-100">$0 - $100</option>
+                                <option value="100-500">$100 - $500</option>
+                                <option value="500-1000">$500 - $1,000</option>
+                                <option value="1000-5000">$1,000 - $5,000</option>
+                                <option value="5000-10000">$5,000 - $10,000</option>
+                                <option value="10000+">$10,000+</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="security-note">
+                        <p><i class="fas fa-shield-alt"></i> Required for Security & Compliance (KYC/AML)</p>
+                        <small>This information is required for regulatory compliance. Your data is encrypted and protected.</small>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="btn-back" onclick="prevStep(2)">← Back</button>
+                        <button type="button" class="btn-next" onclick="nextStep(4)">Next Step →</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Security & Terms -->
+                <div class="form-section" data-section="4">
+                    <div class="form-grid">
+                        <div class="input-group full-width">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="ageConfirm" required>
+                                <label>I confirm that I am at least 18 years of age <span class="required">*</span></label>
+                            </div>
+                        </div>
+                        <div class="input-group full-width">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="termsAccepted" required>
+                                <label>I confirm that I have read and agree to the <a href="#" target="_blank">Terms and Conditions</a> and <a href="#">Privacy Policy</a> <span class="required">*</span></label>
+                            </div>
+                        </div>
+                        <div class="input-group full-width">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="riskAcknowledged" required>
+                                <label>I acknowledge that trading involves significant risk and I may lose my entire investment <span class="required">*</span></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="btn-back" onclick="prevStep(3)">← Back</button>
+                        <button type="submit" class="btn-submit" id="submitBtn">Create Account & Start Trading →</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="login-link">
+                Already have an account? <a href="index.html">Login Here</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        let currentStep = 1;
+
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = field.nextElementSibling;
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function nextStep(step) {
+            // Validate current step
+            if (currentStep === 1) {
+                const fullName = document.getElementById('fullName').value;
+                const email = document.getElementById('email').value;
+                const age = document.getElementById('age').value;
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const employmentStatus = document.getElementById('employmentStatus').value;
+
+                if (!fullName || !email || !age || !password || !confirmPassword || !employmentStatus) {
+                    showError('Please fill in all required fields');
+                    return;
+                }
+                if (age < 18) {
+                    showError('You must be at least 18 years old');
+                    return;
+                }
+                if (password.length < 6) {
+                    showError('Password must be at least 6 characters');
+                    return;
+                }
+                if (password !== confirmPassword) {
+                    showError('Passwords do not match');
+                    return;
+                }
+                if (!email.includes('@')) {
+                    showError('Please enter a valid email address');
+                    return;
+                }
+            }
+
+            if (currentStep === 2) {
+                const country = document.getElementById('country').value;
+                const phoneNumber = document.getElementById('phoneNumber').value;
+                if (!country || !phoneNumber) {
+                    showError('Please fill in all required fields');
+                    return;
+                }
+            }
+
+            if (currentStep === 3) {
+                const tradingExperience = document.getElementById('tradingExperience').value;
+                const fundsSource = document.getElementById('fundsSource').value;
+                if (!tradingExperience || !fundsSource) {
+                    showError('Please fill in all required fields');
+                    return;
+                }
+            }
+
+            // Update UI
+            document.querySelector(`.form-section[data-section="${currentStep}"]`).classList.remove('active');
+            document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.remove('active');
+            document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.add('completed');
+            
+            currentStep = step;
+            document.querySelector(`.form-section[data-section="${currentStep}"]`).classList.add('active');
+            document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.add('active');
+            
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function prevStep(step) {
+            document.querySelector(`.form-section[data-section="${currentStep}"]`).classList.remove('active');
+            document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.remove('active');
+            
+            currentStep = step;
+            document.querySelector(`.form-section[data-section="${currentStep}"]`).classList.add('active');
+            document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.add('active');
+            document.querySelector(`.progress-step[data-step="${currentStep + 1}"]`).classList.remove('completed');
+            
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 4000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => successDiv.style.display = 'none', 4000);
+        }
+
+        // Handle form submission
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Final validation
+            if (!document.getElementById('ageConfirm').checked) {
+                showError('You must confirm that you are at least 18 years old');
+                return;
+            }
+            if (!document.getElementById('termsAccepted').checked) {
+                showError('You must accept the Terms and Conditions');
+                return;
+            }
+            if (!document.getElementById('riskAcknowledged').checked) {
+                showError('You must acknowledge the trading risks');
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.classList.add('btn-loading');
+            submitBtn.disabled = true;
+            
+            const formData = {
+                fullName: document.getElementById('fullName').value,
+                email: document.getElementById('email').value,
+                age: parseInt(document.getElementById('age').value),
+                password: document.getElementById('password').value,
+                country: document.getElementById('country').value,
+                countryCode: document.getElementById('countryCode').value,
+                phoneNumber: document.getElementById('phoneNumber').value,
+                employmentStatus: document.getElementById('employmentStatus').value,
+                tradingExperience: document.getElementById('tradingExperience').value,
+                fundsSource: document.getElementById('fundsSource').value,
+                isFromUSA: document.getElementById('isFromUSA').value,
+                expectedDeposit: document.getElementById('expectedDeposit').value,
+                termsAccepted: true
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/api/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    showSuccess('Account created successfully! Redirecting to dashboard...');
+                    setTimeout(() => {
+                        window.location.href = data.user.isAdmin ? 'admin.html' : 'dashboard.html';
+                    }, 2000);
+                } else {
+                    showError(data.error || 'Registration failed');
+                    submitBtn.classList.remove('btn-loading');
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                showError('Connection error. Please try again.');
+                submitBtn.classList.remove('btn-loading');
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

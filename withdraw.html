@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Withdraw Funds | Algon Flow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background: #0a0e17;
+            color: #e0e3eb;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 80px 20px 40px;
+        }
+        
+        .withdraw-card {
+            background: #0f1322;
+            border-radius: 24px;
+            border: 1px solid rgba(45,212,191,0.3);
+            padding: 30px;
+        }
+        
+        .withdraw-card h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #8a92b0;
+            margin-bottom: 30px;
+        }
+        
+        .balance-display {
+            background: linear-gradient(135deg, #1a1f30, #0f1322);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 25px;
+            border: 1px solid rgba(45,212,191,0.2);
+        }
+        
+        .balance-label {
+            font-size: 14px;
+            color: #8a92b0;
+        }
+        
+        .balance-amount {
+            font-size: 36px;
+            font-weight: 800;
+            color: #2dd4bf;
+        }
+        
+        .input-group {
+            margin: 20px 0;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 14px;
+            background: #1a1f30;
+            border: 1px solid #2d3748;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .preset-amounts {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .preset-btn {
+            background: #1a1f30;
+            border: 1px solid #2d3748;
+            padding: 8px 16px;
+            border-radius: 30px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .network-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #2d3748;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .withdraw-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #ff6b6b, #ff4757);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .warning {
+            background: rgba(255,107,107,0.1);
+            border: 1px solid #ff6b6b;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #ff6b6b;
+        }
+        
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #2dd4bf;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="withdraw-card">
+        <h1><i class="fas fa-minus-circle"></i> Withdraw Funds</h1>
+        <p class="subtitle">Withdraw your earnings in USDT</p>
+        
+        <div class="balance-display">
+            <div class="balance-label">Available Balance</div>
+            <div class="balance-amount">$<span id="availableBalance">0</span></div>
+        </div>
+        
+        <div class="input-group">
+            <label><i class="fas fa-dollar-sign"></i> Amount (USD)</label>
+            <input type="number" id="withdrawAmount" placeholder="Enter amount" min="50" step="10">
+            <div class="preset-amounts">
+                <button class="preset-btn" data-amount="50">$50</button>
+                <button class="preset-btn" data-amount="100">$100</button>
+                <button class="preset-btn" data-amount="500">$500</button>
+                <button class="preset-btn" data-amount="1000">$1,000</button>
+            </div>
+        </div>
+        
+        <div class="input-group">
+            <label><i class="fas fa-network-wired"></i> Network</label>
+            <select id="network">
+                <option value="TRC20">TRC20 (USDT - TRON) - Recommended</option>
+                <option value="ERC20">ERC20 (USDT - Ethereum) - Higher fees</option>
+                <option value="BEP20">BEP20 (USDT - BSC) - Fast & cheap</option>
+                <option value="SOL">SOL (USDT - Solana)</option>
+            </select>
+        </div>
+        
+        <div class="input-group">
+            <label><i class="fas fa-qrcode"></i> Wallet Address</label>
+            <input type="text" id="walletAddress" placeholder="Enter your USDT wallet address">
+        </div>
+        
+        <div class="warning">
+            <i class="fas fa-exclamation-triangle"></i> 
+            Important: Minimum withdrawal is $50 USD. Withdrawals are processed within 24-48 hours after admin approval. Make sure to enter the correct wallet address.
+        </div>
+        
+        <button class="withdraw-btn" id="withdrawBtn"><i class="fas fa-paper-plane"></i> Request Withdrawal</button>
+        
+        <a href="dashboard.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+    </div>
+</div>
+
+<script>
+    const API_URL = window.location.origin;
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    if (!token) window.location.href = 'index.html';
+    
+    let currentBalance = 0;
+    
+    async function loadBalance() {
+        try {
+            const response = await fetch(`${API_URL}/api/user/profile`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            currentBalance = data.user.balance;
+            document.getElementById('availableBalance').innerHTML = currentBalance.toFixed(2);
+        } catch (error) {
+            console.error('Error loading balance:', error);
+        }
+    }
+    
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.getElementById('withdrawAmount').value = btn.dataset.amount;
+        };
+    });
+    
+    document.getElementById('withdrawBtn').onclick = async () => {
+        const amount = parseFloat(document.getElementById('withdrawAmount').value);
+        const network = document.getElementById('network').value;
+        const address = document.getElementById('walletAddress').value;
+        
+        if (!amount || amount < 50) {
+            alert('Minimum withdrawal amount is $50 USD');
+            return;
+        }
+        
+        if (amount > currentBalance) {
+            alert('Insufficient balance');
+            return;
+        }
+        
+        if (!address) {
+            alert('Please enter your wallet address');
+            return;
+        }
+        
+        if (!confirm(`Withdraw $${amount} via ${network} to address ${address.substring(0, 10)}...?`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${API_URL}/api/withdrawal/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ amount, network, address })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                alert(`Withdrawal request submitted! Amount: $${amount}\nNetwork: ${network}\nStatus: Pending Admin Approval`);
+                window.location.href = 'dashboard.html';
+            } else {
+                alert(data.error || 'Withdrawal failed');
+            }
+        } catch (error) {
+            alert('Error processing withdrawal');
+        }
+    };
+    
+    loadBalance();
+</script>
+</body>
+</html>
