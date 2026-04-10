@@ -367,9 +367,17 @@
     </div>
 
     <script>
-        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? `http://${window.location.hostname}:3000` 
-            : window.location.origin;
+        // AUTO-DETECT API URL - Works on localhost AND Render
+        const API_URL = (() => {
+            // If we're on Render or any production domain, use the current origin
+            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                return window.location.origin;
+            }
+            // On localhost, use port 3000 for the backend
+            return 'http://localhost:3000';
+        })();
+
+        console.log('API_URL:', API_URL);
 
         async function fetchBTCPrice() {
             try {
@@ -435,7 +443,7 @@
                 }
             } catch(error) {
                 errorDiv.style.display = 'block';
-                errorDiv.textContent = 'Connection error. Make sure the server is running on port 3000';
+                errorDiv.textContent = 'Connection error. Please try again.';
                 setTimeout(() => errorDiv.style.display = 'none', 5000);
             }
         }

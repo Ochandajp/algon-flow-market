@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const session = require('express-session');
 const axios = require('axios');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -14,20 +15,12 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
-app.use(session({
-    secret: 'algonflow_secret_key_2024',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
-}));
 
 // MongoDB Connection
 const MONGODB_URI = 'mongodb+srv://officialwrittershub_db_user:Fellix@cluster0.6g8mg9p.mongodb.net/algonflow?retryWrites=true&w=majority';
 
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => console.log('✅ Connected to MongoDB'))
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // ============= SCHEMAS =============
@@ -209,7 +202,6 @@ app.post('/api/ai/save-passkey', authenticateToken, async (req, res) => {
     }
 });
 
-// AI Market Analysis Function
 function analyzeMarket(symbol, currentPrice, change24h, volume, volatility) {
     const analysis = {
         decision: null,
@@ -218,10 +210,8 @@ function analyzeMarket(symbol, currentPrice, change24h, volume, volatility) {
         signals: []
     };
     
-    // Simulate sophisticated market analysis
     const rsi = 30 + Math.random() * 70;
     const macd = (Math.random() - 0.5) * 2;
-    const movingAverage = currentPrice * (0.95 + Math.random() * 0.1);
     
     analysis.reasons.push(`📊 RSI: ${rsi.toFixed(2)} - ${rsi < 30 ? 'Oversold' : rsi > 70 ? 'Overbought' : 'Neutral'}`);
     analysis.reasons.push(`📈 MACD: ${macd > 0 ? 'Bullish' : 'Bearish'}`);
@@ -229,7 +219,6 @@ function analyzeMarket(symbol, currentPrice, change24h, volume, volatility) {
     analysis.reasons.push(`⚡ Volume: ${volume > 1000000 ? 'High' : 'Normal'}`);
     analysis.reasons.push(`📉 Volatility: ${volatility > 2 ? 'High' : 'Normal'}`);
     
-    // Make trading decision based on multiple factors
     let buyScore = 0;
     let sellScore = 0;
     
@@ -241,10 +230,7 @@ function analyzeMarket(symbol, currentPrice, change24h, volume, volatility) {
     if (change24h < -2) sellScore += 20;
     if (volatility > 2) buyScore += 15;
     
-    const total = buyScore + sellScore;
-    const randomFactor = (Math.random() - 0.5) * 20;
-    
-    if (buyScore + randomFactor > sellScore) {
+    if (buyScore > sellScore) {
         analysis.decision = 'buy';
         analysis.confidence = Math.min(95, Math.max(55, 55 + (buyScore - sellScore)));
         analysis.signals.push('🚀 Bullish momentum detected');
@@ -256,12 +242,9 @@ function analyzeMarket(symbol, currentPrice, change24h, volume, volatility) {
         analysis.signals.push('⚠️ Resistance level approaching');
     }
     
-    analysis.reasons.push(`🎯 Decision: ${analysis.decision.toUpperCase()} with ${analysis.confidence.toFixed(0)}% confidence`);
-    
     return analysis;
 }
 
-// Simulate price movement for active trades
 async function updateActiveTrades() {
     const activeTrades = await Trade.find({ status: 'active' });
     
@@ -269,17 +252,12 @@ async function updateActiveTrades() {
         const elapsed = Date.now() - new Date(trade.startedAt).getTime();
         const progress = Math.min(1, elapsed / trade.durationMs);
         
-        // Simulate price movement based on direction
-        let currentPrice = trade.entryPrice;
         let simulatedPrice = trade.entryPrice;
-        
         if (trade.side === 'buy') {
-            // For buy trades, price generally moves up with some volatility
             const volatility = 0.002;
             const trend = 0.0005;
             simulatedPrice = trade.entryPrice * (1 + (progress * trend) + (Math.random() - 0.5) * volatility);
         } else {
-            // For sell trades, price generally moves down
             const volatility = 0.002;
             const trend = -0.0005;
             simulatedPrice = trade.entryPrice * (1 + (progress * trend) + (Math.random() - 0.5) * volatility);
@@ -287,7 +265,6 @@ async function updateActiveTrades() {
         
         trade.exitPrice = simulatedPrice;
         
-        // Calculate profit
         let profit = 0;
         if (trade.side === 'buy') {
             profit = (simulatedPrice - trade.entryPrice) / trade.entryPrice * trade.amount * trade.leverage;
@@ -297,12 +274,10 @@ async function updateActiveTrades() {
         
         trade.profit = profit;
         
-        // Check if trade should complete
         if (elapsed >= trade.durationMs || Math.abs(profit) >= trade.amount * 0.83) {
             trade.status = 'completed';
             trade.endedAt = new Date();
             
-            // Update user balance
             const user = await User.findById(trade.userId);
             if (user) {
                 user.balance += profit;
@@ -313,14 +288,12 @@ async function updateActiveTrades() {
                 }
                 user.totalTrades += 1;
                 
-                // Update win rate
                 const completedTrades = await Trade.find({ userId: trade.userId, status: 'completed' });
                 const wins = completedTrades.filter(t => t.profit > 0).length;
                 user.winRate = completedTrades.length > 0 ? (wins / completedTrades.length) * 100 : 0;
                 
                 await user.save();
                 
-                // Record transaction
                 const transaction = new Transaction({
                     userId: user._id,
                     userName: user.fullName,
@@ -337,7 +310,6 @@ async function updateActiveTrades() {
     }
 }
 
-// Run trade updates every 5 seconds
 setInterval(updateActiveTrades, 5000);
 
 app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
@@ -346,7 +318,6 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
         
         const user = await User.findById(req.user.id);
         
-        // Verify passkey
         if (user.aiApiKey !== passkey) {
             return res.status(400).json({ error: 'Invalid AI Passkey' });
         }
@@ -359,7 +330,6 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Insufficient balance' });
         }
         
-        // Get current market price
         let currentPrice = 0;
         let change24h = 0;
         let volume = 0;
@@ -371,7 +341,6 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
                 change24h = parseFloat(response.data.priceChangePercent);
                 volume = parseFloat(response.data.quoteVolume);
             } else {
-                // Simulated prices for forex/commodities
                 currentPrice = 100 + Math.random() * 900;
                 change24h = (Math.random() - 0.5) * 3;
                 volume = 1000000 + Math.random() * 10000000;
@@ -383,18 +352,12 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
         }
         
         const volatility = Math.abs(change24h);
-        
-        // Run market analysis
         const analysis = analyzeMarket(symbol, currentPrice, change24h, volume, volatility);
-        
-        // Determine trade side based on analysis
         const side = analysis.decision;
         
-        // Deduct amount from balance
         user.balance -= amount;
         await user.save();
         
-        // Create trade
         const trade = new Trade({
             userId: user._id,
             symbol,
@@ -437,7 +400,6 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
         const activeTrades = await Trade.find({ userId: req.user.id, status: 'active' }).sort({ startedAt: -1 });
         const tradeHistory = await Trade.find({ userId: req.user.id, status: 'completed' }).sort({ endedAt: -1 }).limit(50);
         
-        // Calculate ROI
         const totalInvested = tradeHistory.reduce((sum, t) => sum + t.amount, 0);
         const totalProfit = tradeHistory.reduce((sum, t) => sum + (t.profit || 0), 0);
         const roi = totalInvested > 0 ? (totalProfit / totalInvested) * 100 : 0;
@@ -463,10 +425,8 @@ app.post('/api/ai/stop-trade/:tradeId', authenticateToken, async (req, res) => {
         trade.status = 'stopped';
         trade.endedAt = new Date();
         
-        // Calculate final profit/loss
         let profit = trade.profit || 0;
         
-        // Update user balance
         const user = await User.findById(req.user.id);
         if (user) {
             user.balance += profit;
@@ -494,7 +454,6 @@ app.post('/api/deposit/create', authenticateToken, async (req, res) => {
         
         const paymentId = 'DEP_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
         
-        // Create pending transaction
         const transaction = new Transaction({
             userId: user._id,
             userName: user.fullName,
@@ -523,15 +482,12 @@ app.get('/api/deposit/check/:paymentId', authenticateToken, async (req, res) => 
             return res.status(404).json({ error: 'Transaction not found' });
         }
         
-        // Simulate payment confirmation (in production, check with NowPayments API)
         if (transaction.status === 'pending') {
-            // For demo, auto-confirm after 10 seconds
             const elapsed = Date.now() - new Date(transaction.createdAt).getTime();
             if (elapsed > 10000) {
                 transaction.status = 'completed';
                 await transaction.save();
                 
-                // Update user balance
                 const user = await User.findById(transaction.userId);
                 if (user) {
                     user.balance += transaction.amount;
@@ -561,7 +517,6 @@ app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Insufficient balance' });
         }
         
-        // Deduct from balance immediately (pending admin approval)
         user.balance -= amount;
         await user.save();
         
@@ -724,7 +679,7 @@ app.get('/api/admin/withdrawals', authenticateToken, isAdmin, async (req, res) =
 
 app.post('/api/admin/withdrawals/:withdrawalId/process', authenticateToken, isAdmin, async (req, res) => {
     try {
-        const { status, txHash } = req.body;
+        const { status } = req.body;
         const withdrawal = await Withdrawal.findById(req.params.withdrawalId);
         
         if (!withdrawal) return res.status(404).json({ error: 'Withdrawal not found' });
@@ -735,13 +690,11 @@ app.post('/api/admin/withdrawals/:withdrawalId/process', authenticateToken, isAd
         
         await withdrawal.save();
         
-        // Update transaction status
         await Transaction.findOneAndUpdate(
             { transactionId: { $regex: withdrawal._id } },
             { status: status === 'approved' ? 'completed' : 'failed' }
         );
         
-        // If rejected, refund the user
         if (status === 'rejected') {
             const user = await User.findById(withdrawal.userId);
             if (user) {
@@ -756,34 +709,7 @@ app.post('/api/admin/withdrawals/:withdrawalId/process', authenticateToken, isAd
     }
 });
 
-// ============= MARKET DATA ROUTES =============
-app.get('/api/market/prices', async (req, res) => {
-    try {
-        const symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT'];
-        const prices = {};
-        
-        for (const symbol of symbols) {
-            try {
-                const response = await axios.get(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
-                prices[symbol] = {
-                    price: parseFloat(response.data.lastPrice),
-                    change: parseFloat(response.data.priceChangePercent),
-                    high: parseFloat(response.data.highPrice),
-                    low: parseFloat(response.data.lowPrice),
-                    volume: parseFloat(response.data.quoteVolume)
-                };
-            } catch (e) {
-                prices[symbol] = { price: 50000, change: 0, high: 51000, low: 49000, volume: 1000000 };
-            }
-        }
-        
-        res.json(prices);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch market data' });
-    }
-});
-
-// Create default admin if not exists
+// Create default admin
 async function createDefaultAdmin() {
     const adminExists = await User.findOne({ email: 'admin@algonflow.com' });
     if (!adminExists) {
@@ -810,7 +736,37 @@ async function createDefaultAdmin() {
     }
 }
 
+// Serve HTML files for all routes
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/register', (req, res) => {
+    res.sendFile(path.join(__dirname, 'register.html'));
+});
+
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
+
+app.get('/profile', (req, res) => {
+    res.sendFile(path.join(__dirname, 'profile.html'));
+});
+
+app.get('/deposit', (req, res) => {
+    res.sendFile(path.join(__dirname, 'deposit.html'));
+});
+
+app.get('/withdraw', (req, res) => {
+    res.sendFile(path.join(__dirname, 'withdraw.html'));
+});
+
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
 app.listen(PORT, async () => {
     await createDefaultAdmin();
     console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`📱 Access from anywhere via your Render URL`);
 });

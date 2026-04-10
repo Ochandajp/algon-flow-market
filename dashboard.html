@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Algon Flow Market | AI Trading Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- TradingView Widget -->
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
         * {
@@ -169,27 +168,6 @@
 
         .price-change {
             font-size: 14px;
-        }
-
-        .timeframes {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-
-        .timeframe-btn {
-            background: #1a1f30;
-            border: none;
-            color: #8a92b0;
-            padding: 4px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 11px;
-        }
-
-        .timeframe-btn.active {
-            background: #2dd4bf;
-            color: #0a0e17;
         }
 
         .tradingview-container {
@@ -593,7 +571,6 @@
                     <button class="order-type" data-order-type="manual">📊 Manual</button>
                 </div>
 
-                <!-- AI Trading Panel -->
                 <div id="aiOrderPanel">
                     <div class="api-key-section">
                         <label style="font-size: 12px; color: #8a92b0;">🔑 AI Passkey</label>
@@ -630,14 +607,12 @@
                         <button class="buy-btn" id="startAIBuyBtn"><i class="fas fa-robot"></i> Start AI Trading</button>
                     </div>
                     
-                    <!-- AI Analysis Display -->
                     <div id="aiAnalysis" class="ai-analysis" style="display: none;">
                         <h4><i class="fas fa-brain"></i> AI Market Analysis</h4>
                         <div id="analysisContent"></div>
                     </div>
                 </div>
 
-                <!-- Manual Trading Panel -->
                 <div id="manualOrderPanel" style="display: none;">
                     <input type="text" id="manualAmount" class="trade-input" placeholder="Amount (USD)">
                     <div class="buy-sell-container">
@@ -682,11 +657,14 @@
 </div>
 
 <script>
-    // Detect API URL
-    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-        ? `http://${window.location.hostname}:3000` 
-        : window.location.origin;
-    
+    // AUTO-DETECT API URL - Works on localhost AND Render
+    const API_URL = (() => {
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            return window.location.origin;
+        }
+        return 'http://localhost:3000';
+    })();
+
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
@@ -704,31 +682,24 @@
     let activeTrades = [];
     let tradeHistory = [];
     let tvWidget = null;
-    let currentInterval = "60";
     
-    // Market Data
     const marketCategories = {
         crypto: [
             { symbol: "BTCUSDT", name: "Bitcoin", tvSymbol: "BINANCE:BTCUSDT" },
             { symbol: "ETHUSDT", name: "Ethereum", tvSymbol: "BINANCE:ETHUSDT" },
             { symbol: "BNBUSDT", name: "Binance Coin", tvSymbol: "BINANCE:BNBUSDT" },
             { symbol: "SOLUSDT", name: "Solana", tvSymbol: "BINANCE:SOLUSDT" },
-            { symbol: "XRPUSDT", name: "Ripple", tvSymbol: "BINANCE:XRPUSDT" },
-            { symbol: "DOGEUSDT", name: "Dogecoin", tvSymbol: "BINANCE:DOGEUSDT" },
-            { symbol: "ADAUSDT", name: "Cardano", tvSymbol: "BINANCE:ADAUSDT" }
+            { symbol: "XRPUSDT", name: "Ripple", tvSymbol: "BINANCE:XRPUSDT" }
         ],
         commodities: [
             { symbol: "XAUUSD", name: "Gold", tvSymbol: "OANDA:XAUUSD" },
             { symbol: "XAGUSD", name: "Silver", tvSymbol: "OANDA:XAGUSD" },
-            { symbol: "USOIL", name: "WTI Crude Oil", tvSymbol: "TVC:USOIL" },
-            { symbol: "UKOIL", name: "Brent Oil", tvSymbol: "TVC:UKOIL" }
+            { symbol: "USOIL", name: "WTI Crude Oil", tvSymbol: "TVC:USOIL" }
         ],
         forex: [
-            { symbol: "EURUSD", name: "Euro / US Dollar", tvSymbol: "FX:EURUSD" },
-            { symbol: "GBPUSD", name: "British Pound / US Dollar", tvSymbol: "FX:GBPUSD" },
-            { symbol: "USDJPY", name: "US Dollar / Japanese Yen", tvSymbol: "FX:USDJPY" },
-            { symbol: "AUDUSD", name: "Australian Dollar / US Dollar", tvSymbol: "FX:AUDUSD" },
-            { symbol: "USDCAD", name: "US Dollar / Canadian Dollar", tvSymbol: "FX:USDCAD" }
+            { symbol: "EURUSD", name: "Euro/US Dollar", tvSymbol: "FX:EURUSD" },
+            { symbol: "GBPUSD", name: "British Pound/US Dollar", tvSymbol: "FX:GBPUSD" },
+            { symbol: "USDJPY", name: "US Dollar/Japanese Yen", tvSymbol: "FX:USDJPY" }
         ]
     };
     
@@ -755,26 +726,27 @@
     }
     
     async function fetchMarketPrices() {
-        const allMarkets = [...marketCategories.crypto, ...marketCategories.commodities, ...marketCategories.forex];
-        for (const market of allMarkets) {
-            try {
-                let price = 0, change = 0, high = 0, low = 0;
-                if (marketCategories.crypto.find(m => m.symbol === market.symbol)) {
-                    const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${market.symbol}`);
-                    const data = await response.json();
-                    price = parseFloat(data.lastPrice);
-                    change = parseFloat(data.priceChangePercent);
-                    high = parseFloat(data.highPrice);
-                    low = parseFloat(data.lowPrice);
-                } else {
-                    price = 100 + Math.random() * 900;
-                    change = (Math.random() - 0.5) * 3;
-                    high = price * 1.02;
-                    low = price * 0.98;
+        for (const cat in marketCategories) {
+            for (const market of marketCategories[cat]) {
+                try {
+                    let price = 0, change = 0, high = 0, low = 0;
+                    if (cat === 'crypto') {
+                        const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${market.symbol}`);
+                        const data = await response.json();
+                        price = parseFloat(data.lastPrice);
+                        change = parseFloat(data.priceChangePercent);
+                        high = parseFloat(data.highPrice);
+                        low = parseFloat(data.lowPrice);
+                    } else {
+                        price = 100 + Math.random() * 900;
+                        change = (Math.random() - 0.5) * 3;
+                        high = price * 1.02;
+                        low = price * 0.98;
+                    }
+                    marketPrices[market.symbol] = { price, change, high, low, name: market.name };
+                } catch (e) {
+                    marketPrices[market.symbol] = { price: 50000, change: 0, high: 51000, low: 49000, name: market.name };
                 }
-                marketPrices[market.symbol] = { price, change, high, low, name: market.name };
-            } catch (e) {
-                marketPrices[market.symbol] = { price: 50000, change: 0, high: 51000, low: 49000, name: market.name };
             }
         }
         renderMarketsList();
@@ -784,6 +756,8 @@
     function renderMarketsList() {
         const markets = marketCategories[currentCategory];
         const container = document.getElementById("marketsList");
+        if (!container) return;
+        
         container.innerHTML = markets.map(m => {
             const priceData = marketPrices[m.symbol] || { price: 0, change: 0 };
             return `
@@ -843,7 +817,7 @@
                 "width": "100%",
                 "height": "100%",
                 "symbol": tvSymbol,
-                "interval": currentInterval,
+                "interval": "60",
                 "timezone": "Etc/UTC",
                 "theme": "dark",
                 "style": "1",
@@ -901,7 +875,6 @@
             return;
         }
         
-        // Show loading in analysis panel
         const analysisDiv = document.getElementById('aiAnalysis');
         const analysisContent = document.getElementById('analysisContent');
         analysisDiv.style.display = 'block';
@@ -925,7 +898,6 @@
             const data = await response.json();
             
             if (data.success) {
-                // Display AI analysis
                 analysisContent.innerHTML = `
                     <div><strong>📊 Decision:</strong> <span style="color: #2dd4bf;">${data.analysis.decision.toUpperCase()}</span> with ${data.analysis.confidence.toFixed(0)}% confidence</div>
                     <div style="margin-top: 8px;"><strong>🎯 Entry Price:</strong> $${data.analysis.entryPrice.toLocaleString()}</div>
@@ -964,10 +936,8 @@
                 <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px;">
                     <span>Duration: ${trade.duration}</span>
                     <span>Entry: $${trade.entryPrice?.toFixed(2) || '--'}</span>
-                    <span>Current: $${trade.exitPrice?.toFixed(2) || trade.entryPrice?.toFixed(2)}</span>
                     <button onclick="stopTrade('${trade._id}')" style="background: #ff6b6b; border: none; color: white; padding: 2px 8px; border-radius: 4px; cursor: pointer;">Stop</button>
                 </div>
-                ${trade.analysis ? `<div style="font-size: 10px; color: #8a92b0; margin-top: 5px;">${trade.analysis.substring(0, 100)}...</div>` : ''}
             </div>
         `).join('');
     }
@@ -979,7 +949,7 @@
             return;
         }
         
-        container.innerHTML = tradeHistory.map(trade => `
+        container.innerHTML = tradeHistory.slice(0, 20).map(trade => `
             <div class="trade-item">
                 <div style="display: flex; justify-content: space-between;">
                     <span><strong>${trade.symbolName}</strong> <span class="badge ${trade.profit >= 0 ? 'badge-completed' : 'badge-loss'}">${trade.status}</span></span>
@@ -994,7 +964,7 @@
         `).join('');
     }
     
-    async function stopTrade(tradeId) {
+    window.stopTrade = async function(tradeId) {
         try {
             const response = await fetch(`${API_URL}/api/ai/stop-trade/${tradeId}`, {
                 method: 'POST',
@@ -1008,7 +978,7 @@
         } catch (error) {
             showMessage('Error stopping trade', 'error');
         }
-    }
+    };
     
     function showMessage(msg, type) {
         const msgDiv = document.getElementById('tradeMessage');
@@ -1017,7 +987,6 @@
         setTimeout(() => msgDiv.innerHTML = '', 5000);
     }
     
-    // Navigation
     document.querySelectorAll(".nav-btn").forEach(btn => {
         btn.onclick = () => {
             document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
@@ -1076,7 +1045,6 @@
     document.getElementById("depositBtn").onclick = () => window.location.href = 'deposit.html';
     document.getElementById("withdrawBtn").onclick = () => window.location.href = 'withdraw.html';
     
-    // Initialize
     fetchUserProfile();
     fetchMarketPrices();
     loadTradingViewChart();

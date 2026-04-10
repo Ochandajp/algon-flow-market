@@ -574,7 +574,7 @@
                                 </tr>
                             </thead>
                             <tbody id="usersList">
-                                <tr><td colspan="7"><div class="loading"><div class="spinner"></div>Loading users...</div></td></tr>
+                                <tr><td colspan="7"><div class="loading">Loading users...</div></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -664,9 +664,13 @@
     </div>
 
     <script>
-        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? `http://${window.location.hostname}:3000` 
-            : window.location.origin;
+        // AUTO-DETECT API URL - Works on localhost AND Render
+        const API_URL = (() => {
+            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                return window.location.origin;
+            }
+            return 'http://localhost:3000';
+        })();
         
         const token = localStorage.getItem('token');
         const user = JSON.parse(localStorage.getItem('user') || '{}');
