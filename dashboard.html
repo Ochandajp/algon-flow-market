@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Algon Flow Market | AI Trading Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- TradingView Widget -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
         * {
             margin: 0;
@@ -19,17 +21,12 @@
             overflow-x: hidden;
         }
 
-        html {
-            touch-action: pan-x pan-y;
-        }
-
         .app-container {
             display: flex;
             height: 100vh;
             flex-direction: column;
         }
 
-        /* Top Navigation */
         .top-nav {
             background: #0f1322;
             border-bottom: 1px solid #1e2538;
@@ -122,7 +119,6 @@
             color: #2dd4bf;
         }
 
-        /* Main Trading Area */
         .main-trading-area {
             display: flex;
             flex: 1;
@@ -145,7 +141,7 @@
             border-radius: 12px;
             border: 1px solid #1e2538;
             padding: 12px;
-            height: 400px;
+            height: 450px;
             display: flex;
             flex-direction: column;
         }
@@ -198,7 +194,7 @@
 
         .tradingview-container {
             flex: 1;
-            min-height: 200px;
+            min-height: 300px;
             border-radius: 8px;
             overflow: hidden;
         }
@@ -505,102 +501,34 @@
             color: #ff6b6b;
         }
 
-        /* Drawer - Collapsible Hot Assets */
-        .hot-assets-drawer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(180deg, #0f1322 0%, #1a1f30 100%);
-            border-top: 2px solid #2dd4bf;
-            border-radius: 20px 20px 0 0;
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            max-height: 50vh;
-            overflow-y: auto;
-            transform: translateY(calc(100% - 50px));
-        }
-
-        .hot-assets-drawer.open {
-            transform: translateY(0);
-        }
-
-        .drawer-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: #1a1f30;
-            border-radius: 20px 20px 0 0;
-            cursor: pointer;
-            border-bottom: 1px solid #2dd4bf;
-        }
-
-        .drawer-header h4 {
-            color: #2dd4bf;
-            font-size: 16px;
-        }
-
-        .drawer-header h4 i {
-            margin-right: 8px;
-        }
-
-        .drawer-toggle-icon {
-            font-size: 20px;
-            transition: transform 0.3s ease;
-            color: #2dd4bf;
-        }
-
-        .hot-assets-drawer.open .drawer-toggle-icon {
-            transform: rotate(180deg);
-        }
-
-        .drawer-content {
-            padding: 15px 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-        }
-
-        .asset-item {
-            background: #0f1322;
-            border-radius: 10px;
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 3px solid #2dd4bf;
-        }
-
-        .asset-symbol {
-            font-weight: 700;
-            font-size: 14px;
-        }
-
-        .asset-name {
-            font-size: 10px;
-            color: #8a92b0;
-        }
-
-        .asset-change {
-            font-weight: 600;
-            font-size: 13px;
-        }
-
-        .asset-change.positive {
-            color: #00d4aa;
-        }
-
-        .asset-change.negative {
-            color: #ff6b6b;
-        }
-
-        .ai-banner {
+        .ai-analysis {
             background: linear-gradient(135deg, #1e3a5f, #0f172a);
             border-radius: 12px;
             padding: 12px;
-            text-align: center;
+            font-size: 11px;
+            margin-top: 12px;
             border: 1px solid #2dd4bf;
+        }
+
+        .ai-analysis h4 {
+            color: #2dd4bf;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .analysis-line {
+            padding: 3px 0;
+            color: #8a92b0;
+        }
+
+        .signal-badge {
+            display: inline-block;
+            background: #2dd4bf20;
+            color: #2dd4bf;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin: 2px;
+            font-size: 10px;
         }
 
         @media (max-width: 768px) {
@@ -615,13 +543,7 @@
                 min-width: 100%;
             }
             .chart-container {
-                height: 300px;
-            }
-            .current-price {
-                font-size: 20px;
-            }
-            .drawer-content {
-                grid-template-columns: 1fr;
+                height: 350px;
             }
         }
     </style>
@@ -660,15 +582,6 @@
                             <div>24h High: <span id="high24h">-</span></div>
                             <div>24h Low: <span id="low24h">-</span></div>
                         </div>
-                    </div>
-                    <div class="timeframes">
-                        <button class="timeframe-btn" data-interval="1">1m</button>
-                        <button class="timeframe-btn" data-interval="5">5m</button>
-                        <button class="timeframe-btn" data-interval="15">15m</button>
-                        <button class="timeframe-btn active" data-interval="60">1H</button>
-                        <button class="timeframe-btn" data-interval="240">4H</button>
-                        <button class="timeframe-btn" data-interval="1D">1D</button>
-                        <button class="timeframe-btn" data-interval="1W">1W</button>
                     </div>
                 </div>
                 <div class="tradingview-container" id="tradingview_chart"></div>
@@ -714,8 +627,13 @@
                     </div>
 
                     <div class="buy-sell-container">
-                        <button class="buy-btn" id="startAIBuyBtn"><i class="fas fa-robot"></i> Start AI BUY</button>
-                        <button class="sell-btn" id="startAISellBtn"><i class="fas fa-robot"></i> Start AI SELL</button>
+                        <button class="buy-btn" id="startAIBuyBtn"><i class="fas fa-robot"></i> Start AI Trading</button>
+                    </div>
+                    
+                    <!-- AI Analysis Display -->
+                    <div id="aiAnalysis" class="ai-analysis" style="display: none;">
+                        <h4><i class="fas fa-brain"></i> AI Market Analysis</h4>
+                        <div id="analysisContent"></div>
                     </div>
                 </div>
 
@@ -736,7 +654,7 @@
             <div id="dashboardPage" class="markets-container">
                 <div class="markets-header">
                     <h4><i class="fas fa-globe"></i> Markets</h4>
-                    <span style="font-size: 11px; color: #2dd4bf;"><i class="fas fa-chart-line"></i> Top Gainers</span>
+                    <span style="font-size: 11px; color: #2dd4bf;"><i class="fas fa-chart-line"></i> Click to select</span>
                 </div>
                 <div class="category-tabs">
                     <button class="category-btn active" data-category="crypto">💰 Crypto</button>
@@ -759,27 +677,16 @@
                     <div id="tradeHistoryList"></div>
                 </div>
             </div>
-
-            <div class="ai-banner">
-                <i class="fas fa-robot"></i> AI Status: <span id="aiStatus">Ready</span><br>
-                <small>Balance: $<span id="aiBalance">0</span></small>
-                <div id="aiSignal" style="font-size: 11px; margin-top: 5px;"></div>
-            </div>
         </div>
     </div>
 </div>
 
-<!-- Hot Assets Drawer - Collapsible -->
-<div class="hot-assets-drawer" id="hotAssetsDrawer">
-    <div class="drawer-header" id="drawerHeader">
-        <h4><i class="fas fa-fire" style="color: #ff6b6b;"></i> Hot Assets 🔥</h4>
-        <i class="fas fa-chevron-up drawer-toggle-icon"></i>
-    </div>
-    <div class="drawer-content" id="drawerAssets"></div>
-</div>
-
 <script>
-    const API_URL = window.location.origin;
+    // Detect API URL
+    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? `http://${window.location.hostname}:3000` 
+        : window.location.origin;
+    
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
@@ -796,79 +703,34 @@
     let userData = null;
     let activeTrades = [];
     let tradeHistory = [];
+    let tvWidget = null;
+    let currentInterval = "60";
     
     // Market Data
     const marketCategories = {
         crypto: [
-            { symbol: "BTCUSDT", name: "Bitcoin" },
-            { symbol: "ETHUSDT", name: "Ethereum" },
-            { symbol: "BNBUSDT", name: "Binance Coin" },
-            { symbol: "SOLUSDT", name: "Solana" },
-            { symbol: "XRPUSDT", name: "Ripple" },
-            { symbol: "DOGEUSDT", name: "Dogecoin" },
-            { symbol: "ADAUSDT", name: "Cardano" },
-            { symbol: "AVAXUSDT", name: "Avalanche" },
-            { symbol: "DOTUSDT", name: "Polkadot" },
-            { symbol: "LINKUSDT", name: "Chainlink" },
-            { symbol: "MATICUSDT", name: "Polygon" },
-            { symbol: "UNIUSDT", name: "Uniswap" },
-            { symbol: "ATOMUSDT", name: "Cosmos" },
-            { symbol: "LTCUSDT", name: "Litecoin" },
-            { symbol: "BCHUSDT", name: "Bitcoin Cash" },
-            { symbol: "NEARUSDT", name: "NEAR Protocol" },
-            { symbol: "ALGOUSDT", name: "Algorand" },
-            { symbol: "VETUSDT", name: "VeChain" },
-            { symbol: "FILUSDT", name: "Filecoin" },
-            { symbol: "EGLDUSDT", name: "MultiversX" },
-            { symbol: "THETAUSDT", name: "Theta" },
-            { symbol: "FTMUSDT", name: "Fantom" },
-            { symbol: "SANDUSDT", name: "The Sandbox" },
-            { symbol: "MANAUSDT", name: "Decentraland" },
-            { symbol: "AXSUSDT", name: "Axie Infinity" },
-            { symbol: "AAVEUSDT", name: "Aave" },
-            { symbol: "SNXUSDT", name: "Synthetix" },
-            { symbol: "COMPUSDT", name: "Compound" },
-            { symbol: "ZECUSDT", name: "Zcash" },
-            { symbol: "XTZUSDT", name: "Tezos" }
+            { symbol: "BTCUSDT", name: "Bitcoin", tvSymbol: "BINANCE:BTCUSDT" },
+            { symbol: "ETHUSDT", name: "Ethereum", tvSymbol: "BINANCE:ETHUSDT" },
+            { symbol: "BNBUSDT", name: "Binance Coin", tvSymbol: "BINANCE:BNBUSDT" },
+            { symbol: "SOLUSDT", name: "Solana", tvSymbol: "BINANCE:SOLUSDT" },
+            { symbol: "XRPUSDT", name: "Ripple", tvSymbol: "BINANCE:XRPUSDT" },
+            { symbol: "DOGEUSDT", name: "Dogecoin", tvSymbol: "BINANCE:DOGEUSDT" },
+            { symbol: "ADAUSDT", name: "Cardano", tvSymbol: "BINANCE:ADAUSDT" }
         ],
         commodities: [
-            { symbol: "XAUUSD", name: "Gold", tradingview: "OANDA:XAUUSD" },
-            { symbol: "XAGUSD", name: "Silver", tradingview: "OANDA:XAGUSD" },
-            { symbol: "USOIL", name: "WTI Crude Oil", tradingview: "TVC:USOIL" },
-            { symbol: "UKOIL", name: "Brent Oil", tradingview: "TVC:UKOIL" },
-            { symbol: "NATGAS", name: "Natural Gas", tradingview: "TVC:NG" },
-            { symbol: "PLAT", name: "Platinum", tradingview: "TVC:PLATINUM" },
-            { symbol: "PALL", name: "Palladium", tradingview: "TVC:PALLADIUM" },
-            { symbol: "WHEAT", name: "Wheat", tradingview: "CBOT:ZW1!" }
+            { symbol: "XAUUSD", name: "Gold", tvSymbol: "OANDA:XAUUSD" },
+            { symbol: "XAGUSD", name: "Silver", tvSymbol: "OANDA:XAGUSD" },
+            { symbol: "USOIL", name: "WTI Crude Oil", tvSymbol: "TVC:USOIL" },
+            { symbol: "UKOIL", name: "Brent Oil", tvSymbol: "TVC:UKOIL" }
         ],
         forex: [
-            { symbol: "EURUSD", name: "Euro / US Dollar", tradingview: "FX:EURUSD" },
-            { symbol: "GBPUSD", name: "British Pound / US Dollar", tradingview: "FX:GBPUSD" },
-            { symbol: "USDJPY", name: "US Dollar / Japanese Yen", tradingview: "FX:USDJPY" },
-            { symbol: "AUDUSD", name: "Australian Dollar / US Dollar", tradingview: "FX:AUDUSD" },
-            { symbol: "USDCAD", name: "US Dollar / Canadian Dollar", tradingview: "FX:USDCAD" },
-            { symbol: "USDCHF", name: "US Dollar / Swiss Franc", tradingview: "FX:USDCHF" },
-            { symbol: "NZDUSD", name: "New Zealand Dollar / US Dollar", tradingview: "FX:NZDUSD" },
-            { symbol: "EURGBP", name: "Euro / British Pound", tradingview: "FX:EURGBP" },
-            { symbol: "EURJPY", name: "Euro / Japanese Yen", tradingview: "FX:EURJPY" },
-            { symbol: "GBPJPY", name: "British Pound / Japanese Yen", tradingview: "FX:GBPJPY" },
-            { symbol: "AUDJPY", name: "Australian Dollar / Japanese Yen", tradingview: "FX:AUDJPY" },
-            { symbol: "CHFJPY", name: "Swiss Franc / Japanese Yen", tradingview: "FX:CHFJPY" },
-            { symbol: "EURCHF", name: "Euro / Swiss Franc", tradingview: "FX:EURCHF" },
-            { symbol: "GBPCHF", name: "British Pound / Swiss Franc", tradingview: "FX:GBPCHF" },
-            { symbol: "USDMXN", name: "US Dollar / Mexican Peso", tradingview: "FX:USDMXN" },
-            { symbol: "USDZAR", name: "US Dollar / South African Rand", tradingview: "FX:USDZAR" },
-            { symbol: "USDTRY", name: "US Dollar / Turkish Lira", tradingview: "FX:USDTRY" },
-            { symbol: "USDSGD", name: "US Dollar / Singapore Dollar", tradingview: "FX:USDSGD" },
-            { symbol: "USDHKD", name: "US Dollar / Hong Kong Dollar", tradingview: "FX:USDHKD" }
+            { symbol: "EURUSD", name: "Euro / US Dollar", tvSymbol: "FX:EURUSD" },
+            { symbol: "GBPUSD", name: "British Pound / US Dollar", tvSymbol: "FX:GBPUSD" },
+            { symbol: "USDJPY", name: "US Dollar / Japanese Yen", tvSymbol: "FX:USDJPY" },
+            { symbol: "AUDUSD", name: "Australian Dollar / US Dollar", tvSymbol: "FX:AUDUSD" },
+            { symbol: "USDCAD", name: "US Dollar / Canadian Dollar", tvSymbol: "FX:USDCAD" }
         ]
     };
-    
-    function getTradingViewSymbol(symbol, category) {
-        if (category === 'crypto') return `BINANCE:${symbol}`;
-        const item = marketCategories[category].find(m => m.symbol === symbol);
-        return item?.tradingview || `FX:${symbol}`;
-    }
     
     async function fetchUserProfile() {
         try {
@@ -878,7 +740,6 @@
             const data = await response.json();
             userData = data.user;
             document.getElementById('userBalance').innerHTML = userData.balance.toFixed(2);
-            document.getElementById('aiBalance').innerHTML = userData.balance.toFixed(2);
             
             if (userData.aiApiKey) {
                 document.getElementById('aiPasskey').value = userData.aiApiKey;
@@ -896,27 +757,28 @@
     async function fetchMarketPrices() {
         const allMarkets = [...marketCategories.crypto, ...marketCategories.commodities, ...marketCategories.forex];
         for (const market of allMarkets) {
-            const category = marketCategories.crypto.find(m => m.symbol === market.symbol) ? 'crypto' : 
-                            marketCategories.commodities.find(m => m.symbol === market.symbol) ? 'commodities' : 'forex';
             try {
-                let price = 0, change = 0;
-                if (category === 'crypto') {
+                let price = 0, change = 0, high = 0, low = 0;
+                if (marketCategories.crypto.find(m => m.symbol === market.symbol)) {
                     const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${market.symbol}`);
                     const data = await response.json();
                     price = parseFloat(data.lastPrice);
                     change = parseFloat(data.priceChangePercent);
+                    high = parseFloat(data.highPrice);
+                    low = parseFloat(data.lowPrice);
                 } else {
                     price = 100 + Math.random() * 900;
                     change = (Math.random() - 0.5) * 3;
+                    high = price * 1.02;
+                    low = price * 0.98;
                 }
-                marketPrices[market.symbol] = { price, change, name: market.name };
+                marketPrices[market.symbol] = { price, change, high, low, name: market.name };
             } catch (e) {
-                marketPrices[market.symbol] = { price: 100 + Math.random() * 900, change: (Math.random() - 0.5) * 3, name: market.name };
+                marketPrices[market.symbol] = { price: 50000, change: 0, high: 51000, low: 49000, name: market.name };
             }
         }
         renderMarketsList();
         updateCurrentMarketDisplay();
-        updateDrawerAssets();
     }
     
     function renderMarketsList() {
@@ -927,7 +789,7 @@
             return `
                 <div class="market-item ${currentSymbol === m.symbol ? 'selected' : ''}" onclick="switchMarket('${m.symbol}', '${m.name}')">
                     <div class="market-info">
-                        <div class="market-symbol">${m.symbol.replace('USDT', '')}/USD</div>
+                        <div class="market-symbol">${m.symbol.replace('USDT', '').replace('USD', '')}/USD</div>
                         <div class="market-name">${m.name}</div>
                     </div>
                     <div class="market-price-info">
@@ -939,32 +801,16 @@
         }).join('');
     }
     
-    function updateDrawerAssets() {
-        const assets = Object.entries(marketPrices)
-            .sort((a, b) => b[1].change - a[1].change)
-            .slice(0, 12);
-        
-        document.getElementById('drawerAssets').innerHTML = assets.map(([symbol, data]) => `
-            <div class="asset-item" onclick="switchMarket('${symbol}', '${data.name}')" style="cursor:pointer;">
-                <div>
-                    <div class="asset-symbol">${symbol.replace('USDT', '').replace('XAU', 'Gold').replace('XAG', 'Silver')}</div>
-                    <div class="asset-name">${data.name}</div>
-                </div>
-                <div class="asset-change ${data.change >= 0 ? 'positive' : 'negative'}">
-                    ${data.change >= 0 ? '+' : ''}${data.change.toFixed(2)}%
-                </div>
-            </div>
-        `).join('');
-    }
-    
     async function updateCurrentMarketDisplay() {
         const data = marketPrices[currentSymbol];
         if (data) {
             document.getElementById("currentPrice").innerHTML = `$${data.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             document.getElementById("priceChange").innerHTML = `${data.change >= 0 ? '+' : ''}${data.change.toFixed(2)}%`;
             document.getElementById("priceChange").style.color = data.change >= 0 ? '#00d4aa' : '#ff6b6b';
+            document.getElementById("high24h").innerHTML = `$${data.high?.toLocaleString() || '-'}`;
+            document.getElementById("low24h").innerHTML = `$${data.low?.toLocaleString() || '-'}`;
         }
-        const displaySymbol = currentSymbol.replace("USDT", "");
+        const displaySymbol = currentSymbol.replace("USDT", "").replace("USD", "");
         document.getElementById("marketSelector").innerHTML = `${displaySymbol}/USD ▼`;
     }
     
@@ -976,25 +822,38 @@
         loadTradingViewChart();
     };
     
-    let currentInterval = "60";
-    
     function loadTradingViewChart() {
         const container = document.getElementById("tradingview_chart");
         if (container) container.innerHTML = "";
-        const intervalMap = { "1": "1", "5": "5", "15": "15", "60": "60", "240": "240", "1D": "1D", "1W": "1W" };
         
-        let category = marketCategories.crypto.find(m => m.symbol === currentSymbol) ? 'crypto' :
-                       marketCategories.commodities.find(m => m.symbol === currentSymbol) ? 'commodities' : 'forex';
-        let tvSymbol = getTradingViewSymbol(currentSymbol, category);
+        let tvSymbol = "BINANCE:BTCUSDT";
+        for (const cat in marketCategories) {
+            const market = marketCategories[cat].find(m => m.symbol === currentSymbol);
+            if (market && market.tvSymbol) {
+                tvSymbol = market.tvSymbol;
+                break;
+            }
+        }
         
         if (typeof TradingView !== 'undefined') {
-            new TradingView.widget({
-                "width": "100%", "height": "100%", "symbol": tvSymbol,
-                "interval": intervalMap[currentInterval] || "60", "timezone": "Etc/UTC",
-                "theme": "dark", "style": "1", "locale": "en",
-                "toolbar_bg": "#0f1322", "enable_publishing": false,
+            if (tvWidget) {
+                try { tvWidget.remove(); } catch(e) {}
+            }
+            tvWidget = new TradingView.widget({
+                "width": "100%",
+                "height": "100%",
+                "symbol": tvSymbol,
+                "interval": currentInterval,
+                "timezone": "Etc/UTC",
+                "theme": "dark",
+                "style": "1",
+                "locale": "en",
+                "toolbar_bg": "#0f1322",
+                "enable_publishing": false,
                 "container_id": "tradingview_chart"
             });
+        } else {
+            setTimeout(loadTradingViewChart, 500);
         }
     }
     
@@ -1013,7 +872,7 @@
             });
             const data = await response.json();
             if (data.success) {
-                showMessage('Passkey saved successfully!', 'success');
+                showMessage('✅ Passkey saved successfully!', 'success');
                 fetchUserProfile();
             } else {
                 showMessage(data.error, 'error');
@@ -1023,24 +882,30 @@
         }
     }
     
-    async function startAITrade(side) {
+    async function startAITrade() {
         const amount = parseFloat(document.getElementById('aiAmount').value);
         const passkey = document.getElementById('aiPasskey').value;
         
         if (!amount || amount < 80) {
-            showMessage('Minimum investment is $80 USD', 'error');
+            showMessage('⚠️ Minimum investment is $80 USD', 'error');
             return;
         }
         
         if (amount > userData?.balance) {
-            showMessage('Insufficient balance', 'error');
+            showMessage('❌ Insufficient balance', 'error');
             return;
         }
         
         if (!passkey) {
-            showMessage('Please save your AI Passkey first', 'error');
+            showMessage('⚠️ Please save your AI Passkey first', 'error');
             return;
         }
+        
+        // Show loading in analysis panel
+        const analysisDiv = document.getElementById('aiAnalysis');
+        const analysisContent = document.getElementById('analysisContent');
+        analysisDiv.style.display = 'block';
+        analysisContent.innerHTML = '<div style="text-align:center;"><i class="fas fa-spinner fa-pulse"></i> Analyzing market conditions...</div>';
         
         try {
             const response = await fetch(`${API_URL}/api/ai/start-trade`, {
@@ -1058,16 +923,28 @@
                 })
             });
             const data = await response.json();
+            
             if (data.success) {
-                showMessage(`AI ${side.toUpperCase()} trade started! ${data.analysis.analysis}`, 'success');
+                // Display AI analysis
+                analysisContent.innerHTML = `
+                    <div><strong>📊 Decision:</strong> <span style="color: #2dd4bf;">${data.analysis.decision.toUpperCase()}</span> with ${data.analysis.confidence.toFixed(0)}% confidence</div>
+                    <div style="margin-top: 8px;"><strong>🎯 Entry Price:</strong> $${data.analysis.entryPrice.toLocaleString()}</div>
+                    <div style="margin-top: 8px;"><strong>📈 Analysis:</strong></div>
+                    ${data.analysis.reasons.map(r => `<div class="analysis-line">${r}</div>`).join('')}
+                    <div style="margin-top: 8px;"><strong>⚡ Signals:</strong></div>
+                    <div>${data.analysis.signals.map(s => `<span class="signal-badge">${s}</span>`).join('')}</div>
+                `;
+                showMessage(`✅ AI Trade Started! ${data.analysis.decision.toUpperCase()} at $${data.analysis.entryPrice.toFixed(2)}`, 'success');
                 document.getElementById('aiAmount').value = '';
                 fetchUserProfile();
                 setTimeout(() => fetchUserProfile(), 5000);
             } else {
                 showMessage(data.error, 'error');
+                analysisDiv.style.display = 'none';
             }
         } catch (error) {
             showMessage('Error starting AI trade', 'error');
+            analysisDiv.style.display = 'none';
         }
     }
     
@@ -1087,8 +964,10 @@
                 <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px;">
                     <span>Duration: ${trade.duration}</span>
                     <span>Entry: $${trade.entryPrice?.toFixed(2) || '--'}</span>
+                    <span>Current: $${trade.exitPrice?.toFixed(2) || trade.entryPrice?.toFixed(2)}</span>
                     <button onclick="stopTrade('${trade._id}')" style="background: #ff6b6b; border: none; color: white; padding: 2px 8px; border-radius: 4px; cursor: pointer;">Stop</button>
                 </div>
+                ${trade.analysis ? `<div style="font-size: 10px; color: #8a92b0; margin-top: 5px;">${trade.analysis.substring(0, 100)}...</div>` : ''}
             </div>
         `).join('');
     }
@@ -1103,12 +982,13 @@
         container.innerHTML = tradeHistory.map(trade => `
             <div class="trade-item">
                 <div style="display: flex; justify-content: space-between;">
-                    <span><strong>${trade.symbolName}</strong> <span class="badge ${trade.status === 'completed' ? 'badge-completed' : 'badge-loss'}">${trade.status}</span></span>
+                    <span><strong>${trade.symbolName}</strong> <span class="badge ${trade.profit >= 0 ? 'badge-completed' : 'badge-loss'}">${trade.status}</span></span>
                     <span class="${trade.profit >= 0 ? 'trade-profit' : 'trade-loss'}">${trade.profit >= 0 ? '+' : ''}$${trade.profit?.toFixed(2) || '0'}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: #8a92b0;">
-                    <span>${trade.duration}</span>
-                    <span>${new Date(trade.endedAt).toLocaleString()}</span>
+                    <span>Amount: $${trade.amount}</span>
+                    <span>Duration: ${trade.duration}</span>
+                    <span>${new Date(trade.endedAt || trade.startedAt).toLocaleString()}</span>
                 </div>
             </div>
         `).join('');
@@ -1122,7 +1002,7 @@
             });
             const data = await response.json();
             if (data.success) {
-                showMessage('Trade stopped successfully', 'success');
+                showMessage(`Trade stopped. Profit/Loss: $${data.profit?.toFixed(2)}`, 'success');
                 fetchUserProfile();
             }
         } catch (error) {
@@ -1136,13 +1016,6 @@
         msgDiv.style.color = type === 'error' ? '#ff6b6b' : '#2dd4bf';
         setTimeout(() => msgDiv.innerHTML = '', 5000);
     }
-    
-    // Drawer toggle
-    const drawer = document.getElementById('hotAssetsDrawer');
-    const drawerHeader = document.getElementById('drawerHeader');
-    drawerHeader.onclick = () => {
-        drawer.classList.toggle('open');
-    };
     
     // Navigation
     document.querySelectorAll(".nav-btn").forEach(btn => {
@@ -1198,30 +1071,16 @@
         };
     });
     
-    document.querySelectorAll(".timeframe-btn").forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll(".timeframe-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            currentInterval = btn.dataset.interval;
-            loadTradingViewChart();
-        };
-    });
-    
     document.getElementById("savePasskeyBtn").onclick = savePasskey;
-    document.getElementById("startAIBuyBtn").onclick = () => startAITrade('buy');
-    document.getElementById("startAISellBtn").onclick = () => startAITrade('sell');
+    document.getElementById("startAIBuyBtn").onclick = startAITrade;
     document.getElementById("depositBtn").onclick = () => window.location.href = 'deposit.html';
     document.getElementById("withdrawBtn").onclick = () => window.location.href = 'withdraw.html';
-    
-    // Load TradingView
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/tv.js';
-    script.onload = () => loadTradingViewChart();
-    document.head.appendChild(script);
     
     // Initialize
     fetchUserProfile();
     fetchMarketPrices();
+    loadTradingViewChart();
+    
     setInterval(() => {
         fetchMarketPrices();
         fetchUserProfile();

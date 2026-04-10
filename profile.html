@@ -318,7 +318,10 @@
 </div>
 
 <script>
-    const API_URL = window.location.origin;
+    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? `http://${window.location.hostname}:3000` 
+        : window.location.origin;
+    
     const token = localStorage.getItem('token');
     
     if (!token) window.location.href = 'index.html';
@@ -371,7 +374,6 @@
                 tradesList.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px;">No trades yet</td></tr>';
             }
             
-            // Create charts
             createCharts(trades);
             
         } catch (error) {
@@ -380,7 +382,6 @@
     }
     
     function createCharts(trades) {
-        // Prepare data for profit/loss chart
         const dates = trades.map(t => new Date(t.endedAt || t.startedAt).toLocaleDateString()).reverse();
         const profits = trades.map(t => t.profit || 0).reverse();
         
@@ -407,7 +408,6 @@
             }
         });
         
-        // Balance growth chart (mock data from trades)
         let runningBalance = 1000;
         const balanceData = [runningBalance];
         for (let i = 0; i < profits.length; i++) {

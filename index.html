@@ -19,7 +19,6 @@
             overflow-x: hidden;
         }
 
-        /* Background Animation */
         .bg-animation {
             position: fixed;
             top: 0;
@@ -71,7 +70,6 @@
             66% { transform: translate(-20px,20px) scale(0.9); }
         }
 
-        /* Navbar */
         .navbar {
             position: fixed;
             top: 0;
@@ -82,11 +80,6 @@
             background: rgba(10,14,23,0.95);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(45,212,191,0.2);
-            transition: 0.3s;
-        }
-
-        .navbar.scrolled {
-            padding: 15px 50px;
         }
 
         .nav-container {
@@ -114,12 +107,6 @@
             align-items: center;
             justify-content: center;
             font-size: 22px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%,100% { box-shadow: 0 0 0 0 rgba(45,212,191,0.4); }
-            50% { box-shadow: 0 0 0 15px rgba(45,212,191,0); }
         }
 
         .logo-text {
@@ -129,24 +116,6 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 40px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .nav-links a {
-            color: #e0e3eb;
-            text-decoration: none;
-            font-weight: 500;
-            transition: 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: #2dd4bf;
         }
 
         .auth-buttons {
@@ -162,12 +131,6 @@
             color: #2dd4bf;
             font-weight: 600;
             cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .btn-login:hover {
-            background: #2dd4bf;
-            color: #0a0e17;
         }
 
         .btn-signup {
@@ -180,7 +143,6 @@
             cursor: pointer;
         }
 
-        /* Hero Section */
         .hero {
             position: relative;
             z-index: 1;
@@ -232,37 +194,6 @@
             color: #2dd4bf;
         }
 
-        .stat-label {
-            font-size: 14px;
-            color: #8a92b0;
-        }
-
-        .cta-buttons {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .btn-primary {
-            padding: 16px 40px;
-            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
-            border: none;
-            border-radius: 50px;
-            color: #0a0e17;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .btn-outline {
-            padding: 16px 40px;
-            background: transparent;
-            border: 2px solid #2dd4bf;
-            border-radius: 50px;
-            color: #2dd4bf;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
         .hero-right {
             background: rgba(15,19,34,0.7);
             backdrop-filter: blur(20px);
@@ -271,138 +202,28 @@
             border: 1px solid rgba(45,212,191,0.3);
         }
 
-        .chart-preview {
-            background: #0f1322;
-            border-radius: 20px;
-            padding: 20px;
+        .live-price-card {
+            text-align: center;
         }
 
-        .chart-preview .candle {
-            height: 200px;
-            background: linear-gradient(180deg, #2dd4bf, #00c6fb);
-            border-radius: 10px;
+        .live-price-card h3 {
             margin-bottom: 15px;
+            color: #2dd4bf;
         }
 
-        /* Features Section */
-        .features {
-            padding: 100px 50px;
-            background: rgba(10,14,23,0.8);
-        }
-
-        .section-title {
-            text-align: center;
+        .btc-price {
             font-size: 48px;
-            margin-bottom: 20px;
-        }
-
-        .section-subtitle {
-            text-align: center;
-            color: #8a92b0;
-            margin-bottom: 60px;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px,1fr));
-            gap: 30px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .feature-card {
-            background: rgba(15,19,34,0.8);
-            border-radius: 24px;
-            padding: 35px;
-            text-align: center;
-            border: 1px solid rgba(45,212,191,0.2);
-            transition: 0.3s;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-10px);
-            border-color: #2dd4bf;
-        }
-
-        .feature-icon {
-            width: 70px;
-            height: 70px;
-            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-            margin: 0 auto 25px;
-        }
-
-        /* Tiers Section */
-        .tiers {
-            padding: 100px 50px;
-        }
-
-        .tiers-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
-            gap: 20px;
-            max-width: 1200px;
-            margin: 50px auto 0;
-        }
-
-        .tier-card {
-            background: rgba(15,19,34,0.8);
-            border-radius: 16px;
-            padding: 25px;
-            text-align: center;
-            border: 1px solid rgba(45,212,191,0.2);
-        }
-
-        .tier-rate {
-            font-size: 32px;
             font-weight: 800;
-            color: #2dd4bf;
+            margin: 20px 0;
         }
 
-        /* Footer */
-        .footer {
-            background: #0f1322;
-            padding: 60px 50px 30px;
-            border-top: 1px solid rgba(45,212,191,0.2);
+        .price-change {
+            font-size: 18px;
         }
 
-        .footer-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
-            gap: 40px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .positive { color: #2dd4bf; }
+        .negative { color: #ff6b6b; }
 
-        .footer-col h4 {
-            margin-bottom: 20px;
-            color: #2dd4bf;
-        }
-
-        .footer-col a {
-            display: block;
-            color: #8a92b0;
-            text-decoration: none;
-            margin-bottom: 12px;
-        }
-
-        .footer-col a:hover {
-            color: #2dd4bf;
-        }
-
-        .copyright {
-            text-align: center;
-            padding-top: 40px;
-            margin-top: 40px;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            color: #8a92b0;
-        }
-
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -449,13 +270,6 @@
             cursor: pointer;
         }
 
-        .modal-close {
-            float: right;
-            font-size: 28px;
-            cursor: pointer;
-            color: #8a92b0;
-        }
-
         .error-message {
             background: rgba(255,107,107,0.1);
             border: 1px solid #ff6b6b;
@@ -476,12 +290,6 @@
             .navbar {
                 padding: 15px 20px;
             }
-            .nav-links {
-                display: none;
-            }
-            .section-title {
-                font-size: 32px;
-            }
         }
     </style>
 </head>
@@ -492,17 +300,11 @@
         <div class="orb orb-3"></div>
     </div>
 
-    <nav class="navbar" id="navbar">
+    <nav class="navbar">
         <div class="nav-container">
             <div class="logo">
                 <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
                 <div class="logo-text">ALGON FLOW</div>
-            </div>
-            <div class="nav-links">
-                <a href="#home">Home</a>
-                <a href="#features">Features</a>
-                <a href="#tiers">AI Tiers</a>
-                <a href="#contact">Contact</a>
             </div>
             <div class="auth-buttons">
                 <button class="btn-login" onclick="openLoginModal()">Sign In</button>
@@ -511,18 +313,18 @@
         </div>
     </nav>
 
-    <section class="hero" id="home">
+    <section class="hero">
         <div class="hero-content">
             <div class="hero-left">
                 <h1>Trade Crypto with <span class="gradient-text">AI-Powered</span> Intelligence</h1>
                 <p>Join 50,000+ traders using Algon Flow's advanced AI algorithms. Earn up to 22% daily returns with our automated trading system.</p>
                 <div class="hero-stats">
                     <div class="stat">
-                        <div class="stat-number" id="statUsers">0</div>
+                        <div class="stat-number" id="statUsers">50,000+</div>
                         <div class="stat-label">Active Traders</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-number" id="statVolume">$0</div>
+                        <div class="stat-number" id="statVolume">$2.5B+</div>
                         <div class="stat-label">Trading Volume</div>
                     </div>
                     <div class="stat">
@@ -531,153 +333,69 @@
                     </div>
                 </div>
                 <div class="cta-buttons">
-                    <button class="btn-primary" onclick="window.location.href='register.html'">Start Trading Now</button>
-                    <button class="btn-outline" onclick="openLoginModal()">Existing User? Sign In</button>
+                    <button class="btn-signup" onclick="window.location.href='register.html'" style="font-size: 16px;">Start Trading Now</button>
                 </div>
             </div>
             <div class="hero-right">
-                <div class="chart-preview">
-                    <div class="candle"></div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span>BTC/USD</span>
-                        <span style="color: #2dd4bf;" id="btcPrice">$0 ▲ +0%</span>
+                <div class="live-price-card">
+                    <h3><i class="fab fa-bitcoin"></i> Bitcoin (BTC/USD)</h3>
+                    <div class="btc-price" id="btcPrice">Loading...</div>
+                    <div class="price-change" id="btcChange">Loading...</div>
+                    <div style="margin-top: 20px; font-size: 12px; color: #8a92b0;">
+                        <div>24h High: <span id="high24h">-</span></div>
+                        <div>24h Low: <span id="low24h">-</span></div>
+                        <div>24h Volume: <span id="volume">-</span></div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="features" id="features">
-        <h2 class="section-title">Why Choose <span class="gradient-text">Algon Flow</span></h2>
-        <p class="section-subtitle">Experience the future of crypto trading with our cutting-edge features</p>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-robot"></i></div>
-                <h3>AI Trading Bot</h3>
-                <p>24/7 automated trading with intelligent algorithms.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
-                <h3>Live Charts</h3>
-                <p>Professional TradingView charts with real-time data.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-bolt"></i></div>
-                <h3>100x Leverage</h3>
-                <p>Amplify your trades with up to 100x leverage.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
-                <h3>Bank-Grade Security</h3>
-                <p>Military-grade encryption and multi-signature wallets.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-clock"></i></div>
-                <h3>24/7 Support</h3>
-                <p>Dedicated customer support available around the clock.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-chart-pie"></i></div>
-                <h3>Real-Time Analytics</h3>
-                <p>Track your portfolio with detailed profit reports.</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="tiers" id="tiers">
-        <h2 class="section-title">AI Profit <span class="gradient-text">Tiers</span></h2>
-        <p class="section-subtitle">Higher balance = Higher daily returns</p>
-        <div class="tiers-grid">
-            <div class="tier-card"><div class="tier-range">$0 - $100</div><div class="tier-rate">2%</div><div class="tier-label">Daily Profit</div></div>
-            <div class="tier-card"><div class="tier-range">$100 - $200</div><div class="tier-rate">3.5%</div><div class="tier-label">Daily Profit</div></div>
-            <div class="tier-card"><div class="tier-range">$250 - $500</div><div class="tier-rate">5%</div><div class="tier-label">Daily Profit</div></div>
-            <div class="tier-card"><div class="tier-range">$500 - $1,000</div><div class="tier-rate">6%</div><div class="tier-label">Daily Profit</div></div>
-            <div class="tier-card"><div class="tier-range">$1,100 - $2,500</div><div class="tier-rate">10%</div><div class="tier-label">Daily Profit</div></div>
-            <div class="tier-card"><div class="tier-range">$2,500 - $5,000</div><div class="tier-rate">13%</div><div class="tier-label">Daily Profit</div></div>
-            <div class="tier-card"><div class="tier-range">$5,000 - $10,000</div><div class="tier-rate">18%</div><div class="tier-label">Daily Profit</div></div>
-            <div class="tier-card"><div class="tier-range">$10,000+</div><div class="tier-rate">22%</div><div class="tier-label">Daily Profit</div></div>
-        </div>
-    </section>
-
-    <footer class="footer" id="contact">
-        <div class="footer-content">
-            <div class="footer-col">
-                <h4>Algon Flow Market</h4>
-                <p>AI-powered crypto trading platform.</p>
-            </div>
-            <div class="footer-col">
-                <h4>Quick Links</h4>
-                <a href="#home">Home</a>
-                <a href="#features">Features</a>
-                <a href="#tiers">AI Tiers</a>
-            </div>
-            <div class="footer-col">
-                <h4>Support</h4>
-                <a href="#">Help Center</a>
-                <a href="#">Contact Us</a>
-                <a href="#">Terms & Conditions</a>
-            </div>
-            <div class="footer-col">
-                <h4>Contact</h4>
-                <a href="#"><i class="fas fa-envelope"></i> support@algonflow.com</a>
-                <a href="#"><i class="fab fa-twitter"></i> @AlgonFlow</a>
-            </div>
-        </div>
-        <div class="copyright">
-            <p>&copy; 2024 Algon Flow Market. All rights reserved. Trading involves risk.</p>
-        </div>
-    </footer>
-
     <!-- Login Modal -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
-            <span class="modal-close" onclick="closeModals()">&times;</span>
-            <h2>Welcome Back</h2>
+            <span class="modal-close" onclick="closeModals()" style="float: right; font-size: 28px; cursor: pointer;">&times;</span>
+            <h2 style="margin-bottom: 20px;">Welcome Back</h2>
             <div id="loginError" class="error-message"></div>
             <input type="email" id="loginEmail" placeholder="Email Address">
             <input type="password" id="loginPassword" placeholder="Password">
             <button onclick="handleLogin()">Sign In</button>
-            <div class="switch-auth" style="margin-top:15px; text-align:center;">
+            <div style="margin-top:15px; text-align:center;">
                 Don't have an account? <a href="register.html" style="color:#2dd4bf;">Create Account</a>
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = window.location.origin;
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? `http://${window.location.hostname}:3000` 
+            : window.location.origin;
 
-        window.addEventListener('scroll', () => {
-            const navbar = document.getElementById('navbar');
-            if (window.scrollY > 50) navbar.classList.add('scrolled');
-            else navbar.classList.remove('scrolled');
-        });
-
-        async function fetchLiveData() {
+        async function fetchBTCPrice() {
             try {
                 const response = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
                 const data = await response.json();
                 const price = parseFloat(data.lastPrice);
                 const change = parseFloat(data.priceChangePercent);
-                document.getElementById('btcPrice').innerHTML = `$${price.toLocaleString()} ${change >= 0 ? '▲' : '▼'} ${change.toFixed(2)}%`;
-                document.getElementById('btcPrice').style.color = change >= 0 ? '#2dd4bf' : '#ff6b6b';
+                const high = parseFloat(data.highPrice);
+                const low = parseFloat(data.lowPrice);
+                const volume = parseFloat(data.quoteVolume);
+                
+                document.getElementById('btcPrice').innerHTML = `$${price.toLocaleString()}`;
+                document.getElementById('btcChange').innerHTML = `${change >= 0 ? '▲' : '▼'} ${change.toFixed(2)}%`;
+                document.getElementById('btcChange').className = `price-change ${change >= 0 ? 'positive' : 'negative'}`;
+                document.getElementById('high24h').innerHTML = `$${high.toLocaleString()}`;
+                document.getElementById('low24h').innerHTML = `$${low.toLocaleString()}`;
+                document.getElementById('volume').innerHTML = `$${(volume / 1000000).toFixed(2)}M`;
             } catch(e) {
-                document.getElementById('btcPrice').innerHTML = '$72,400 ▲ +1.27%';
-            }
-
-            try {
-                const usersResponse = await fetch(`${API_URL}/api/admin/users`);
-                const users = await usersResponse.json();
-                document.getElementById('statUsers').innerText = users.length.toLocaleString();
-                const totalVolume = users.reduce((sum, u) => sum + (u.totalDeposits || 0), 0);
-                document.getElementById('statVolume').innerHTML = `$${totalVolume.toLocaleString()}`;
-            } catch(e) {
-                document.getElementById('statUsers').innerText = '50,000+';
-                document.getElementById('statVolume').innerHTML = '$2.5B+';
+                document.getElementById('btcPrice').innerHTML = '$68,500';
+                document.getElementById('btcChange').innerHTML = '▲ +1.27%';
+                document.getElementById('btcChange').className = 'price-change positive';
             }
         }
 
-        fetchLiveData();
-        setInterval(fetchLiveData, 30000);
+        fetchBTCPrice();
+        setInterval(fetchBTCPrice, 30000);
 
         function openLoginModal() {
             document.getElementById('loginModal').classList.add('active');
@@ -717,8 +435,8 @@
                 }
             } catch(error) {
                 errorDiv.style.display = 'block';
-                errorDiv.textContent = 'Connection error';
-                setTimeout(() => errorDiv.style.display = 'none', 3000);
+                errorDiv.textContent = 'Connection error. Make sure the server is running on port 3000';
+                setTimeout(() => errorDiv.style.display = 'none', 5000);
             }
         }
 

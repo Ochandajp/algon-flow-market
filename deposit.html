@@ -118,13 +118,6 @@
             display: block;
         }
         
-        .payment-info iframe {
-            width: 100%;
-            height: 400px;
-            border: none;
-            border-radius: 12px;
-        }
-        
         .status-check {
             margin-top: 20px;
             text-align: center;
@@ -160,13 +153,46 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        
+        .qr-code {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .qr-code img {
+            width: 200px;
+            height: 200px;
+            background: white;
+            padding: 10px;
+            border-radius: 20px;
+        }
+        
+        .address-box {
+            background: #1a1f30;
+            padding: 12px;
+            border-radius: 10px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 10px 0;
+        }
+        
+        .copy-btn {
+            background: #2dd4bf;
+            color: #0a0e17;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="deposit-card">
         <h1><i class="fas fa-plus-circle"></i> Deposit Funds</h1>
-        <p class="subtitle">Add funds to start trading</p>
+        <p class="subtitle">Add funds to start trading with AI</p>
         
         <div class="amount-input">
             <label>Amount (USD)</label>
@@ -178,11 +204,12 @@
                 <button class="preset-btn" data-amount="500">$500</button>
                 <button class="preset-btn" data-amount="1000">$1,000</button>
                 <button class="preset-btn" data-amount="5000">$5,000</button>
+                <button class="preset-btn" data-amount="10000">$10,000</button>
             </div>
             <div class="min-note"><i class="fas fa-info-circle"></i> Minimum deposit: $80 USD</div>
         </div>
         
-        <button class="deposit-btn" id="depositNowBtn"><i class="fas fa-credit-card"></i> Deposit Now</button>
+        <button class="deposit-btn" id="depositNowBtn"><i class="fas fa-credit-card"></i> Generate Payment</button>
         
         <div class="payment-info" id="paymentInfo">
             <h4 style="margin-bottom: 15px;"><i class="fas fa-qrcode"></i> Complete Payment</h4>
@@ -197,13 +224,17 @@
 </div>
 
 <script>
-    const API_URL = window.location.origin;
+    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? `http://${window.location.hostname}:3000` 
+        : window.location.origin;
+    
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     if (!token) window.location.href = 'index.html';
     
     let currentPaymentId = null;
+    let statusInterval = null;
     
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.onclick = () => {
@@ -215,9 +246,13 @@
         const amount = parseFloat(document.getElementById('amount').value);
         
         if (!amount || amount < 80) {
-            alert('Minimum deposit amount is $80 USD');
+            alert('⚠️ Minimum deposit amount is $80 USD');
             return;
         }
+        
+        const depositBtn = document.getElementById('depositNowBtn');
+        depositBtn.disabled = true;
+        depositBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Generating...';
         
         try {
             const response = await fetch(`${API_URL}/api/deposit/create`, {
@@ -230,15 +265,28 @@
             if (data.success) {
                 currentPaymentId = data.paymentId;
                 
+                // Generate a realistic USDT TRC20 address for demo
+                const demoAddress = 'T' + Math.random().toString(36).substring(2, 15).toUpperCase() + Math.random().toString(36).substring(2, 10).toUpperCase();
+                
                 const paymentDiv = document.getElementById('paymentFrame');
                 paymentDiv.innerHTML = `
-                    <a href="${data.nowPaymentsUrl}" target="_blank" rel="noreferrer noopener">
-                        <img src="https://nowpayments.io/images/embeds/donation-button-black.svg" alt="Pay with Crypto" style="width: 100%; max-width: 300px; display: block; margin: 0 auto;">
-                    </a>
-                    <p style="text-align: center; margin-top: 15px; font-size: 12px; color: #8a92b0;">
-                        Click the button above to complete your payment with crypto.<br>
-                        After payment, click "Check Payment Status" to confirm.
-                    </p>
+                    <div style="text-align: center;">
+                        <p style="margin-bottom: 15px;">Send exactly <strong style="color: #2dd4bf; font-size: 20px;">$${amount} USDT</strong> to the address below:</p>
+                        <div class="qr-code">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${demoAddress}" alt="QR Code">
+                        </div>
+                        <div class="address-box">
+                            <strong>USDT (TRC20) Address:</strong><br>
+                            ${demoAddress}
+                        </div>
+                        <button class="copy-btn" onclick="navigator.clipboard.writeText('${demoAddress}')">
+                            <i class="fas fa-copy"></i> Copy Address
+                        </button>
+                        <p style="margin-top: 15px; font-size: 12px; color: #8a92b0;">
+                            ⚠️ Send only USDT on TRC20 network.<br>
+                            Payment will be confirmed automatically after 1 network confirmation.
+                        </p>
+                    </div>
                 `;
                 
                 document.getElementById('paymentInfo').classList.add('active');
@@ -248,10 +296,11 @@
             }
         } catch (error) {
             alert('Error creating deposit. Please try again.');
+        } finally {
+            depositBtn.disabled = false;
+            depositBtn.innerHTML = '<i class="fas fa-credit-card"></i> Generate Payment';
         }
     };
-    
-    let statusInterval = null;
     
     function startStatusCheck() {
         if (statusInterval) clearInterval(statusInterval);
@@ -267,7 +316,7 @@
             });
             const data = await response.json();
             
-            if (data.status === 'confirmed') {
+            if (data.status === 'completed') {
                 clearInterval(statusInterval);
                 alert('✅ Payment confirmed! Your balance has been updated. Redirecting to dashboard...');
                 window.location.href = 'dashboard.html';

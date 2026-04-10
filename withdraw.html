@@ -113,12 +113,34 @@
             margin-top: 20px;
         }
         
+        .withdraw-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .info-box {
+            background: rgba(45,212,191,0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #8a92b0;
+        }
+        
         .back-link {
             display: block;
             text-align: center;
             margin-top: 20px;
             color: #2dd4bf;
             text-decoration: none;
+        }
+        
+        .fee-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #8a92b0;
         }
     </style>
 </head>
@@ -141,32 +163,57 @@
                 <button class="preset-btn" data-amount="100">$100</button>
                 <button class="preset-btn" data-amount="500">$500</button>
                 <button class="preset-btn" data-amount="1000">$1,000</button>
+                <button class="preset-btn" data-amount="5000">$5,000</button>
+            </div>
+            <div class="fee-info">
+                <span>Withdrawal Fee:</span>
+                <span>$0 (Free)</span>
+            </div>
+            <div class="fee-info">
+                <span>You will receive:</span>
+                <span id="receiveAmount">$0</span>
             </div>
         </div>
         
         <div class="input-group">
             <label><i class="fas fa-network-wired"></i> Network</label>
             <select id="network">
-                <option value="TRC20">TRC20 (USDT - TRON)</option>
-                <option value="ERC20">ERC20 (USDT - Ethereum)</option>
-                <option value="BEP20">BEP20 (USDT - BSC)</option>
-                <option value="SOL">SOL (USDT - Solana)</option>
+                <option value="TRC20">TRC20 (USDT - TRON) - Recommended</option>
+                <option value="ERC20">ERC20 (USDT - Ethereum) - Higher fees</option>
+                <option value="BEP20">BEP20 (USDT - BSC) - Fast</option>
+                <option value="SOL">SOL (USDT - Solana) - Low fees</option>
             </select>
         </div>
         
         <div class="input-group">
             <label><i class="fas fa-qrcode"></i> Wallet Address</label>
             <input type="text" id="walletAddress" placeholder="Enter your USDT wallet address">
+            <small style="color: #8a92b0; display: block; margin-top: 5px;">
+                Make sure to use the correct network address
+            </small>
+        </div>
+        
+        <div class="input-group">
+            <label><i class="fas fa-envelope"></i> Email (for confirmation)</label>
+            <input type="email" id="confirmEmail" placeholder="Your registered email">
         </div>
         
         <button class="withdraw-btn" id="withdrawBtn"><i class="fas fa-paper-plane"></i> Request Withdrawal</button>
+        
+        <div class="info-box">
+            <i class="fas fa-clock"></i> Withdrawals are processed within 24-48 hours after admin approval.<br>
+            <i class="fas fa-shield-alt"></i> For security, withdrawals require email verification.
+        </div>
         
         <a href="dashboard.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
     </div>
 </div>
 
 <script>
-    const API_URL = window.location.origin;
+    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? `http://${window.location.hostname}:3000` 
+        : window.location.origin;
+    
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
@@ -187,9 +234,16 @@
         }
     }
     
+    document.getElementById('withdrawAmount').addEventListener('input', function() {
+        const amount = parseFloat(this.value) || 0;
+        document.getElementById('receiveAmount').innerHTML = `$${amount.toFixed(2)}`;
+    });
+    
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.onclick = () => {
-            document.getElementById('withdrawAmount').value = btn.dataset.amount;
+            const amount = btn.dataset.amount;
+            document.getElementById('withdrawAmount').value = amount;
+            document.getElementById('receiveAmount').innerHTML = `$${amount}`;
         };
     });
     
@@ -197,25 +251,40 @@
         const amount = parseFloat(document.getElementById('withdrawAmount').value);
         const network = document.getElementById('network').value;
         const address = document.getElementById('walletAddress').value;
+        const confirmEmail = document.getElementById('confirmEmail').value;
         
         if (!amount || amount < 50) {
-            alert('Minimum withdrawal amount is $50 USD');
+            alert('⚠️ Minimum withdrawal amount is $50 USD');
             return;
         }
         
         if (amount > currentBalance) {
-            alert('Insufficient balance');
+            alert('❌ Insufficient balance');
             return;
         }
         
         if (!address) {
-            alert('Please enter your wallet address');
+            alert('⚠️ Please enter your wallet address');
             return;
         }
         
-        if (!confirm(`Withdraw $${amount} via ${network} to address ${address.substring(0, 10)}...?`)) {
+        if (!confirmEmail) {
+            alert('⚠️ Please enter your email for confirmation');
             return;
         }
+        
+        if (confirmEmail !== user.email) {
+            alert('❌ Email does not match your registered email');
+            return;
+        }
+        
+        if (!confirm(`📤 Withdrawal Request Summary:\n\nAmount: $${amount}\nNetwork: ${network}\nAddress: ${address.substring(0, 15)}...\n\nProcessing time: 24-48 hours\n\nConfirm withdrawal request?`)) {
+            return;
+        }
+        
+        const withdrawBtn = document.getElementById('withdrawBtn');
+        withdrawBtn.disabled = true;
+        withdrawBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Processing...';
         
         try {
             const response = await fetch(`${API_URL}/api/withdrawal/request`, {
@@ -226,13 +295,16 @@
             const data = await response.json();
             
             if (data.success) {
-                alert(`Withdrawal request submitted! Amount: $${amount}\nNetwork: ${network}\nStatus: Pending Admin Approval`);
+                alert(`✅ Withdrawal request submitted successfully!\n\nAmount: $${amount}\nNetwork: ${network}\n\nYour request will be processed within 24-48 hours.\nYou will receive a confirmation email once processed.`);
                 window.location.href = 'dashboard.html';
             } else {
-                alert(data.error || 'Withdrawal failed');
+                alert('❌ ' + (data.error || 'Withdrawal failed'));
             }
         } catch (error) {
-            alert('Error processing withdrawal');
+            alert('❌ Error processing withdrawal. Please try again.');
+        } finally {
+            withdrawBtn.disabled = false;
+            withdrawBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Request Withdrawal';
         }
     };
     
