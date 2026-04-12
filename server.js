@@ -313,12 +313,16 @@ async function updateActiveTrades() {
             
             const user = await User.findById(trade.userId);
             if (user) {
-                // FIXED: Add profit to existing balance correctly
+                // CRITICAL FIX: Add profit to existing balance (which already includes remaining funds)
+                // Example: User had $2000, used $500 for trade, remaining $1500
+                // If profit is $50, new balance = $1500 + $500 (original trade amount) + $50 profit = $2050
+                // But since we deducted $500 at trade start, we just add back the trade amount + profit
+                const amountToReturn = trade.amount + profit;
+                user.balance = user.balance + amountToReturn;
+                
                 if (profit > 0) {
-                    user.balance = user.balance + profit;
                     user.totalProfit = (user.totalProfit || 0) + profit;
                 } else {
-                    user.balance = user.balance + profit;
                     user.totalLoss = (user.totalLoss || 0) + Math.abs(profit);
                 }
                 user.totalTrades = (user.totalTrades || 0) + 1;
@@ -470,7 +474,10 @@ app.post('/api/ai/stop-trade/:tradeId', authenticateToken, async (req, res) => {
         
         const user = await User.findById(req.user.id);
         if (user) {
-            user.balance = user.balance + profit;
+            // Return the trade amount plus profit/loss
+            const amountToReturn = trade.amount + profit;
+            user.balance = user.balance + amountToReturn;
+            
             if (profit > 0) {
                 user.totalProfit = (user.totalProfit || 0) + profit;
             } else {
