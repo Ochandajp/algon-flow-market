@@ -98,6 +98,12 @@
             border-radius: 30px;
             color: white;
             cursor: pointer;
+            transition: 0.2s;
+        }
+        
+        .preset-btn:hover {
+            border-color: #2dd4bf;
+            color: #2dd4bf;
         }
         
         .withdraw-btn {
@@ -297,6 +303,8 @@
                 window.location.href = 'dashboard.html';
             } else {
                 alert('❌ ' + (data.error || 'Withdrawal failed'));
+                // Reload balance to show correct amount if withdrawal failed
+                loadBalance();
             }
         } catch (error) {
             alert('❌ Error processing withdrawal. Please try again.');

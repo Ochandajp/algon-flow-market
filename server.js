@@ -10,8 +10,13 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
+// Middleware - Allow all origins for cross-platform access
+app.use(cors({
+    origin: '*',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.static(__dirname));
 
@@ -190,14 +195,35 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// ============= AI TRADING ROUTES =============
+// ============= AI PASSKEY ROUTES =============
 app.post('/api/ai/save-passkey', authenticateToken, async (req, res) => {
     try {
         const { passkey } = req.body;
+        if (!passkey || passkey.trim() === '') {
+            return res.status(400).json({ error: 'Passkey cannot be empty' });
+        }
         await User.findByIdAndUpdate(req.user.id, { aiApiKey: passkey });
         res.json({ success: true, message: 'Passkey saved successfully' });
     } catch (error) {
         res.status(500).json({ error: 'Failed to save passkey' });
+    }
+});
+
+app.delete('/api/ai/delete-passkey', authenticateToken, async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(req.user.id, { aiApiKey: '' });
+        res.json({ success: true, message: 'Passkey deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete passkey' });
+    }
+});
+
+app.get('/api/ai/get-passkey', authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        res.json({ success: true, passkey: user.aiApiKey || '' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get passkey' });
     }
 });
 
@@ -271,12 +297,10 @@ async function updateActiveTrades() {
             profit = (trade.entryPrice - simulatedPrice) / trade.entryPrice * trade.amount * trade.leverage;
         }
         
-        // Cap loss at maximum $10
         if (profit < -10) {
             profit = -10;
         }
         
-        // Ensure profit is at least $15 for positive trades
         if (profit > 0 && profit < 15) {
             profit = 15 + Math.random() * 20;
         }
@@ -289,14 +313,15 @@ async function updateActiveTrades() {
             
             const user = await User.findById(trade.userId);
             if (user) {
+                // FIXED: Add profit to existing balance correctly
                 if (profit > 0) {
-                    user.balance += profit;
-                    user.totalProfit += profit;
+                    user.balance = user.balance + profit;
+                    user.totalProfit = (user.totalProfit || 0) + profit;
                 } else {
-                    user.balance += profit;
-                    user.totalLoss += Math.abs(profit);
+                    user.balance = user.balance + profit;
+                    user.totalLoss = (user.totalLoss || 0) + Math.abs(profit);
                 }
-                user.totalTrades += 1;
+                user.totalTrades = (user.totalTrades || 0) + 1;
                 
                 const completedTrades = await Trade.find({ userId: trade.userId, status: 'completed' });
                 const wins = completedTrades.filter(t => t.profit > 0).length;
@@ -365,7 +390,8 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
         const analysis = analyzeMarket(symbol, currentPrice, change24h, volume, volatility);
         const side = analysis.decision;
         
-        user.balance -= amount;
+        // Deduct investment amount from balance
+        user.balance = user.balance - amount;
         await user.save();
         
         const trade = new Trade({
@@ -444,11 +470,11 @@ app.post('/api/ai/stop-trade/:tradeId', authenticateToken, async (req, res) => {
         
         const user = await User.findById(req.user.id);
         if (user) {
-            user.balance += profit;
+            user.balance = user.balance + profit;
             if (profit > 0) {
-                user.totalProfit += profit;
+                user.totalProfit = (user.totalProfit || 0) + profit;
             } else {
-                user.totalLoss += Math.abs(profit);
+                user.totalLoss = (user.totalLoss || 0) + Math.abs(profit);
             }
             await user.save();
         }
@@ -505,8 +531,8 @@ app.get('/api/deposit/check/:paymentId', authenticateToken, async (req, res) => 
                 
                 const user = await User.findById(transaction.userId);
                 if (user) {
-                    user.balance += transaction.amount;
-                    user.totalDeposits += transaction.amount;
+                    user.balance = user.balance + transaction.amount;
+                    user.totalDeposits = (user.totalDeposits || 0) + transaction.amount;
                     await user.save();
                 }
             }
@@ -532,7 +558,7 @@ app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Insufficient balance' });
         }
         
-        user.balance -= amount;
+        user.balance = user.balance - amount;
         await user.save();
         
         const withdrawal = new Withdrawal({
@@ -591,8 +617,8 @@ app.post('/api/admin/add-balance', authenticateToken, isAdmin, async (req, res) 
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ error: 'User not found' });
         
-        user.balance += amount;
-        user.totalDeposits += amount;
+        user.balance = user.balance + amount;
+        user.totalDeposits = (user.totalDeposits || 0) + amount;
         await user.save();
         
         const transaction = new Transaction({
@@ -622,7 +648,7 @@ app.post('/api/admin/deduct-balance', authenticateToken, isAdmin, async (req, re
         
         if (user.balance < amount) return res.status(400).json({ error: 'Insufficient balance' });
         
-        user.balance -= amount;
+        user.balance = user.balance - amount;
         await user.save();
         
         const transaction = new Transaction({
@@ -713,7 +739,7 @@ app.post('/api/admin/withdrawals/:withdrawalId/process', authenticateToken, isAd
         if (status === 'rejected') {
             const user = await User.findById(withdrawal.userId);
             if (user) {
-                user.balance += withdrawal.amount;
+                user.balance = user.balance + withdrawal.amount;
                 await user.save();
             }
         }
@@ -747,66 +773,24 @@ async function createDefaultAdmin() {
         });
         await admin.save();
         console.log('✅ Default admin created: admin@algonflow.com / Admin123!');
-        console.log('📌 AI Passkey for admin: admin_ai_key_2024');
     }
 }
 
-// Serve HTML files - THIS IS THE KEY - all routes serve the same files
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.get('/index.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, 'register.html'));
-});
-
-app.get('/register.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'register.html'));
-});
-
-app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dashboard.html'));
-});
-
-app.get('/dashboard.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dashboard.html'));
-});
-
-app.get('/profile', (req, res) => {
-    res.sendFile(path.join(__dirname, 'profile.html'));
-});
-
-app.get('/profile.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'profile.html'));
-});
-
-app.get('/deposit', (req, res) => {
-    res.sendFile(path.join(__dirname, 'deposit.html'));
-});
-
-app.get('/deposit.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'deposit.html'));
-});
-
-app.get('/withdraw', (req, res) => {
-    res.sendFile(path.join(__dirname, 'withdraw.html'));
-});
-
-app.get('/withdraw.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'withdraw.html'));
-});
-
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
-});
-
-app.get('/admin.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
-});
+// Serve HTML files
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/index.html', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
+app.get('/register.html', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
+app.get('/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
+app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'profile.html')));
+app.get('/profile.html', (req, res) => res.sendFile(path.join(__dirname, 'profile.html')));
+app.get('/deposit', (req, res) => res.sendFile(path.join(__dirname, 'deposit.html')));
+app.get('/deposit.html', (req, res) => res.sendFile(path.join(__dirname, 'deposit.html')));
+app.get('/withdraw', (req, res) => res.sendFile(path.join(__dirname, 'withdraw.html')));
+app.get('/withdraw.html', (req, res) => res.sendFile(path.join(__dirname, 'withdraw.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
 app.listen(PORT, async () => {
     await createDefaultAdmin();

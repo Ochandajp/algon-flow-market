@@ -303,6 +303,34 @@
             font-size: 12px;
         }
 
+        .key-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .save-key-btn {
+            background: #2dd4bf;
+            border: none;
+            color: #0a0e17;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .delete-key-btn {
+            background: #ff6b6b;
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            flex: 1;
+        }
+
         .start-ai-btn {
             background: linear-gradient(135deg, #667eea, #764ba2);
             border: none;
@@ -486,6 +514,7 @@
             font-size: 11px;
             margin-top: 12px;
             border: 1px solid #2dd4bf;
+            display: none;
         }
 
         .ai-analysis h4 {
@@ -507,6 +536,12 @@
             border-radius: 12px;
             margin: 2px;
             font-size: 10px;
+        }
+
+        .passkey-status {
+            font-size: 11px;
+            margin-top: 5px;
+            color: #2dd4bf;
         }
 
         @media (max-width: 768px) {
@@ -575,7 +610,11 @@
                     <div class="api-key-section">
                         <label style="font-size: 12px; color: #8a92b0;">🔑 AI Passkey</label>
                         <input type="password" id="aiPasskey" class="api-key-input" placeholder="Enter your AI Passkey">
-                        <button class="start-ai-btn" id="savePasskeyBtn"><i class="fas fa-key"></i> Save Passkey</button>
+                        <div class="key-buttons">
+                            <button class="save-key-btn" id="savePasskeyBtn"><i class="fas fa-save"></i> Save</button>
+                            <button class="delete-key-btn" id="deletePasskeyBtn"><i class="fas fa-trash"></i> Delete</button>
+                        </div>
+                        <div id="passkeyStatus" class="passkey-status"></div>
                     </div>
 
                     <input type="number" id="aiAmount" class="trade-input" placeholder="Investment Amount (USD)" step="100">
@@ -607,7 +646,7 @@
                         <button class="buy-btn" id="startAIBuyBtn"><i class="fas fa-robot"></i> Start AI Trading</button>
                     </div>
                     
-                    <div id="aiAnalysis" class="ai-analysis" style="display: none;">
+                    <div id="aiAnalysis" class="ai-analysis">
                         <h4><i class="fas fa-brain"></i> AI Market Analysis</h4>
                         <div id="analysisContent"></div>
                     </div>
@@ -708,6 +747,9 @@
             
             if (userData.aiApiKey) {
                 document.getElementById('aiPasskey').value = userData.aiApiKey;
+                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-check-circle"></i> Passkey is set';
+            } else {
+                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-exclamation-circle"></i> No passkey set';
             }
             
             activeTrades = data.activeTrades || [];
@@ -841,12 +883,35 @@
             const data = await response.json();
             if (data.success) {
                 showMessage('✅ Passkey saved successfully!', 'success');
+                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-check-circle"></i> Passkey is set';
                 fetchUserProfile();
             } else {
                 showMessage(data.error, 'error');
             }
         } catch (error) {
             showMessage('Error saving passkey', 'error');
+        }
+    }
+    
+    async function deletePasskey() {
+        if (!confirm('Are you sure you want to delete your AI Passkey? You will not be able to start AI trades without it.')) return;
+        
+        try {
+            const response = await fetch(`${API_URL}/api/ai/delete-passkey`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.success) {
+                showMessage('✅ Passkey deleted successfully!', 'success');
+                document.getElementById('aiPasskey').value = '';
+                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-exclamation-circle"></i> No passkey set';
+                fetchUserProfile();
+            } else {
+                showMessage(data.error, 'error');
+            }
+        } catch (error) {
+            showMessage('Error deleting passkey', 'error');
         }
     }
     
@@ -1035,6 +1100,7 @@
     });
     
     document.getElementById("savePasskeyBtn").onclick = savePasskey;
+    document.getElementById("deletePasskeyBtn").onclick = deletePasskey;
     document.getElementById("startAIBuyBtn").onclick = startAITrade;
     document.getElementById("depositBtn").onclick = () => window.location.href = 'deposit.html';
     document.getElementById("withdrawBtn").onclick = () => window.location.href = 'withdraw.html';
