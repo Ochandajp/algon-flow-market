@@ -614,7 +614,7 @@
                 </div>
 
                 <div id="manualOrderPanel" style="display: none;">
-                    <input type="text" id="manualAmount" class="trade-input" placeholder="Amount (USD)">
+                    <input type="number" id="manualAmount" class="trade-input" placeholder="Amount (USD)">
                     <div class="buy-sell-container">
                         <button class="buy-btn" id="manualBuyBtn"><i class="fas fa-arrow-up"></i> BUY</button>
                         <button class="sell-btn" id="manualSellBtn"><i class="fas fa-arrow-down"></i> SELL</button>
@@ -657,13 +657,9 @@
 </div>
 
 <script>
-    // AUTO-DETECT API URL - Works on localhost AND Render
-    const API_URL = (() => {
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            return window.location.origin;
-        }
-        return 'http://localhost:3000';
-    })();
+    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? `http://${window.location.hostname}:3000` 
+        : window.location.origin;
 
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');

@@ -367,17 +367,9 @@
     </div>
 
     <script>
-        // AUTO-DETECT API URL - Works on localhost AND Render
-        const API_URL = (() => {
-            // If we're on Render or any production domain, use the current origin
-            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-                return window.location.origin;
-            }
-            // On localhost, use port 3000 for the backend
-            return 'http://localhost:3000';
-        })();
-
-        console.log('API_URL:', API_URL);
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? `http://${window.location.hostname}:3000` 
+            : window.location.origin;
 
         async function fetchBTCPrice() {
             try {

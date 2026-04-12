@@ -17,7 +17,7 @@ app.use(express.json());
 app.use(express.static(__dirname));
 
 // MongoDB Connection
-const MONGODB_URI = 'mongodb+srv://officialwrittershub_db_user:Fellix@cluster0.6g8mg9p.mongodb.net/algonflow?retryWrites=true&w=majority';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://officialwrittershub_db_user:Fellix@cluster0.6g8mg9p.mongodb.net/algonflow?retryWrites=true&w=majority';
 
 mongoose.connect(MONGODB_URI)
   .then(() => console.log('✅ Connected to MongoDB'))
@@ -108,7 +108,7 @@ const authenticateToken = (req, res, next) => {
     if (!token) return res.status(401).json({ error: 'Access denied' });
     
     try {
-        const verified = jwt.verify(token, 'algonflow_jwt_secret');
+        const verified = jwt.verify(token, process.env.JWT_SECRET || 'algonflow_jwt_secret');
         req.user = verified;
         next();
     } catch (error) {
@@ -153,7 +153,7 @@ app.post('/api/register', async (req, res) => {
         
         await user.save();
         
-        const token = jwt.sign({ id: user._id, email: user.email, isAdmin: user.isAdmin }, 'algonflow_jwt_secret');
+        const token = jwt.sign({ id: user._id, email: user.email, isAdmin: user.isAdmin }, process.env.JWT_SECRET || 'algonflow_jwt_secret');
         
         res.status(201).json({ 
             success: true, 
@@ -179,7 +179,7 @@ app.post('/api/login', async (req, res) => {
         user.lastLogin = new Date();
         await user.save();
         
-        const token = jwt.sign({ id: user._id, email: user.email, isAdmin: user.isAdmin }, 'algonflow_jwt_secret');
+        const token = jwt.sign({ id: user._id, email: user.email, isAdmin: user.isAdmin }, process.env.JWT_SECRET || 'algonflow_jwt_secret');
         
         res.json({ 
             success: true, 
@@ -272,6 +272,16 @@ async function updateActiveTrades() {
             profit = (trade.entryPrice - simulatedPrice) / trade.entryPrice * trade.amount * trade.leverage;
         }
         
+        // Cap loss at maximum $10
+        if (profit < -10) {
+            profit = -10;
+        }
+        
+        // Ensure profit is at least 1.5x of potential loss for positive trades
+        if (profit > 0 && profit < 15) {
+            profit = 15 + Math.random() * 20;
+        }
+        
         trade.profit = profit;
         
         if (elapsed >= trade.durationMs || Math.abs(profit) >= trade.amount * 0.83) {
@@ -280,10 +290,13 @@ async function updateActiveTrades() {
             
             const user = await User.findById(trade.userId);
             if (user) {
-                user.balance += profit;
+                // FIXED: For profit trades, add profit to balance
+                // For loss trades, deduct only the loss amount (capped at $10)
                 if (profit > 0) {
+                    user.balance += profit;
                     user.totalProfit += profit;
                 } else {
+                    user.balance += profit; // profit is negative here
                     user.totalLoss += Math.abs(profit);
                 }
                 user.totalTrades += 1;
@@ -355,6 +368,7 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
         const analysis = analyzeMarket(symbol, currentPrice, change24h, volume, volatility);
         const side = analysis.decision;
         
+        // Deduct the investment amount from balance
         user.balance -= amount;
         await user.save();
         
@@ -426,6 +440,12 @@ app.post('/api/ai/stop-trade/:tradeId', authenticateToken, async (req, res) => {
         trade.endedAt = new Date();
         
         let profit = trade.profit || 0;
+        
+        // Cap loss at $10
+        if (profit < -10) {
+            profit = -10;
+            trade.profit = profit;
+        }
         
         const user = await User.findById(req.user.id);
         if (user) {
@@ -727,7 +747,7 @@ async function createDefaultAdmin() {
             fundsSource: 'Business Revenue',
             termsAccepted: true,
             isAdmin: true,
-            balance: 0,
+            balance: 10000,
             aiApiKey: 'admin_ai_key_2024'
         });
         await admin.save();

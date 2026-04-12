@@ -299,11 +299,6 @@
         <canvas id="profitLossChart"></canvas>
     </div>
     
-    <div class="chart-card">
-        <h3><i class="fas fa-chart-line"></i> Balance Growth</h3>
-        <canvas id="balanceChart"></canvas>
-    </div>
-    
     <div class="trades-table">
         <h3><i class="fas fa-history"></i> Recent Trades</h3>
         <div style="overflow-x: auto;">
@@ -326,7 +321,7 @@
     
     if (!token) window.location.href = 'index.html';
     
-    let profitLossChart, balanceChart;
+    let profitLossChart;
     
     async function loadProfile() {
         try {
@@ -357,7 +352,6 @@
             document.getElementById('fundsSource').innerHTML = user.fundsSource;
             document.getElementById('totalDeposits').innerHTML = `$${user.totalDeposits?.toFixed(2) || '0'}`;
             
-            // Render trades table
             const tradesList = document.getElementById('tradesList');
             if (trades && trades.length > 0) {
                 tradesList.innerHTML = trades.slice(0, 20).map(trade => `
@@ -396,36 +390,6 @@
                     data: profits,
                     borderColor: '#2dd4bf',
                     backgroundColor: 'rgba(45, 212, 191, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { labels: { color: '#e0e3eb' } }
-                }
-            }
-        });
-        
-        let runningBalance = 1000;
-        const balanceData = [runningBalance];
-        for (let i = 0; i < profits.length; i++) {
-            runningBalance += profits[i];
-            balanceData.push(runningBalance);
-        }
-        
-        if (balanceChart) balanceChart.destroy();
-        const ctx2 = document.getElementById('balanceChart').getContext('2d');
-        balanceChart = new Chart(ctx2, {
-            type: 'line',
-            data: {
-                labels: ['Start', ...dates],
-                datasets: [{
-                    label: 'Balance ($)',
-                    data: balanceData,
-                    borderColor: '#00c6fb',
-                    backgroundColor: 'rgba(0, 198, 251, 0.1)',
                     fill: true,
                     tension: 0.4
                 }]

@@ -265,7 +265,6 @@
             if (data.success) {
                 currentPaymentId = data.paymentId;
                 
-                // Generate a realistic USDT TRC20 address for demo
                 const demoAddress = 'T' + Math.random().toString(36).substring(2, 15).toUpperCase() + Math.random().toString(36).substring(2, 10).toUpperCase();
                 
                 const paymentDiv = document.getElementById('paymentFrame');
