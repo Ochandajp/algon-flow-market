@@ -664,9 +664,7 @@
     </div>
 
     <script>
-        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? `http://${window.location.hostname}:3000` 
-            : window.location.origin;
+        const API_URL = window.location.origin;
         
         const token = localStorage.getItem('token');
         const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -871,7 +869,7 @@
                     </tr>
                 `).join('');
             } catch (error) {
-                document.getElementById('transactionsList').innerHTML = '<tr><td colspan="6">Error loading transactions</td></tr>';
+                document.getElementById('transactionsList').innerHTML = '<td><td colspan="6">Error loading transactions</td></tr>';
             }
         }
 

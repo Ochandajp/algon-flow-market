@@ -3,9 +3,8 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const session = require('express-session');
-const axios = require('axios');
 const path = require('path');
+const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
@@ -277,7 +276,7 @@ async function updateActiveTrades() {
             profit = -10;
         }
         
-        // Ensure profit is at least 1.5x of potential loss for positive trades
+        // Ensure profit is at least $15 for positive trades
         if (profit > 0 && profit < 15) {
             profit = 15 + Math.random() * 20;
         }
@@ -290,13 +289,11 @@ async function updateActiveTrades() {
             
             const user = await User.findById(trade.userId);
             if (user) {
-                // FIXED: For profit trades, add profit to balance
-                // For loss trades, deduct only the loss amount (capped at $10)
                 if (profit > 0) {
                     user.balance += profit;
                     user.totalProfit += profit;
                 } else {
-                    user.balance += profit; // profit is negative here
+                    user.balance += profit;
                     user.totalLoss += Math.abs(profit);
                 }
                 user.totalTrades += 1;
@@ -368,7 +365,6 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
         const analysis = analyzeMarket(symbol, currentPrice, change24h, volume, volatility);
         const side = analysis.decision;
         
-        // Deduct the investment amount from balance
         user.balance -= amount;
         await user.save();
         
@@ -441,7 +437,6 @@ app.post('/api/ai/stop-trade/:tradeId', authenticateToken, async (req, res) => {
         
         let profit = trade.profit || 0;
         
-        // Cap loss at $10
         if (profit < -10) {
             profit = -10;
             trade.profit = profit;
@@ -756,8 +751,12 @@ async function createDefaultAdmin() {
     }
 }
 
-// Serve HTML files for all routes
+// Serve HTML files - THIS IS THE KEY - all routes serve the same files
 app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/index.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
@@ -765,7 +764,15 @@ app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'register.html'));
 });
 
+app.get('/register.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'register.html'));
+});
+
 app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
+
+app.get('/dashboard.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
@@ -773,7 +780,15 @@ app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, 'profile.html'));
 });
 
+app.get('/profile.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'profile.html'));
+});
+
 app.get('/deposit', (req, res) => {
+    res.sendFile(path.join(__dirname, 'deposit.html'));
+});
+
+app.get('/deposit.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'deposit.html'));
 });
 
@@ -781,7 +796,15 @@ app.get('/withdraw', (req, res) => {
     res.sendFile(path.join(__dirname, 'withdraw.html'));
 });
 
+app.get('/withdraw.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'withdraw.html'));
+});
+
 app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+app.get('/admin.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
