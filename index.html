@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Create Account | Algon Flow Market</title>
+    <title>Algon Flow Market | AI-Powered Crypto Trading Platform</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -14,9 +14,8 @@
         }
 
         body {
-            background: linear-gradient(135deg, #0a0e17 0%, #0f1322 100%);
+            background: #0a0e17;
             color: #fff;
-            min-height: 100vh;
             overflow-x: hidden;
         }
 
@@ -38,299 +37,259 @@
             animation: float 20s infinite;
         }
 
-        .orb-1 { width: 500px; height: 500px; background: #2dd4bf; top: -200px; right: -100px; }
-        .orb-2 { width: 400px; height: 400px; background: #00c6fb; bottom: -150px; left: -100px; animation-delay: -5s; }
-        .orb-3 { width: 300px; height: 300px; background: #764ba2; top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: -10s; }
+        .orb-1 {
+            width: 500px;
+            height: 500px;
+            background: #2dd4bf;
+            top: -200px;
+            right: -100px;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: #00c6fb;
+            bottom: -150px;
+            left: -100px;
+            animation-delay: -5s;
+        }
+
+        .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: #764ba2;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -10s;
+        }
 
         @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(30px, -30px) scale(1.1); }
-            66% { transform: translate(-20px, 20px) scale(0.9); }
+            0%,100% { transform: translate(0,0) scale(1); }
+            33% { transform: translate(30px,-30px) scale(1.1); }
+            66% { transform: translate(-20px,20px) scale(0.9); }
         }
 
-        .register-container {
-            position: relative;
-            z-index: 1;
-            max-width: 1000px;
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 20px 50px;
+            background: rgba(10,14,23,0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(45,212,191,0.2);
+        }
+
+        .nav-container {
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 100px 20px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
-        .register-card {
-            background: rgba(15, 19, 34, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 32px;
-            padding: 45px;
-            border: 1px solid rgba(45, 212, 191, 0.3);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .register-card h1 {
-            font-size: 36px;
-            margin-bottom: 10px;
-            text-align: center;
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .logo-text {
+            font-size: 26px;
+            font-weight: 800;
             background: linear-gradient(135deg, #fff, #2dd4bf, #00c6fb);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
         }
 
-        .register-card .subtitle {
-            text-align: center;
-            color: #8a92b0;
-            margin-bottom: 35px;
-            font-size: 16px;
-        }
-
-        .progress-bar {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 45px;
-            position: relative;
-        }
-
-        .progress-bar::before {
-            content: '';
-            position: absolute;
-            top: 20px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: #2d3748;
-            z-index: 0;
-        }
-
-        .progress-step {
-            position: relative;
-            z-index: 1;
-            background: #0f1322;
-            padding: 0 10px;
-            text-align: center;
-        }
-
-        .step-circle {
-            width: 45px;
-            height: 45px;
-            background: #1a1f30;
-            border: 2px solid #2d3748;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            font-weight: 700;
-            font-size: 18px;
-            transition: all 0.3s ease;
-        }
-
-        .progress-step.active .step-circle {
-            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
-            border-color: #2dd4bf;
-            color: #0a0e17;
-            box-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
-        }
-
-        .progress-step.completed .step-circle {
-            background: #00d4aa;
-            border-color: #00d4aa;
-            color: #0a0e17;
-        }
-
-        .step-label {
-            font-size: 12px;
-            color: #8a92b0;
-            font-weight: 500;
-        }
-
-        .progress-step.active .step-label {
-            color: #2dd4bf;
-        }
-
-        .form-section {
-            display: none;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .form-section.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group.full-width {
-            grid-column: span 2;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 13px;
-            color: #e0e3eb;
-            font-weight: 500;
-        }
-
-        .input-group label i {
-            margin-right: 6px;
-            color: #2dd4bf;
-        }
-
-        .required {
-            color: #ff6b6b;
-        }
-
-        .input-group input, 
-        .input-group select, 
-        .input-group textarea {
-            width: 100%;
-            padding: 12px 14px;
-            background: #1a1f30;
-            border: 1px solid #2d3748;
-            border-radius: 12px;
-            color: #fff;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .input-group input:focus, 
-        .input-group select:focus {
-            outline: none;
-            border-color: #2dd4bf;
-            box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1);
-        }
-
-        .password-wrapper {
-            position: relative;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #8a92b0;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 15px;
-            background: rgba(45, 212, 191, 0.05);
-            border-radius: 12px;
-            border: 1px solid rgba(45, 212, 191, 0.2);
-        }
-
-        .checkbox-group input {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: #2dd4bf;
-        }
-
-        .checkbox-group label {
-            margin-bottom: 0;
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        .checkbox-group a {
-            color: #2dd4bf;
-            text-decoration: none;
-        }
-
-        .button-group {
+        .auth-buttons {
             display: flex;
             gap: 15px;
-            margin-top: 30px;
         }
 
-        .btn-next, .btn-back, .btn-submit {
-            padding: 14px 28px;
-            border-radius: 12px;
+        .btn-login {
+            padding: 10px 28px;
+            background: transparent;
+            border: 2px solid #2dd4bf;
+            border-radius: 40px;
+            color: #2dd4bf;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-signup {
+            padding: 10px 28px;
+            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
+            border: none;
+            border-radius: 40px;
+            color: #0a0e17;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-            font-size: 14px;
         }
 
-        .btn-next {
-            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
-            color: #0a0e17;
-            flex: 1;
+        .hero {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 120px 50px 80px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
-        .btn-back {
-            background: #2d3748;
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .hero-left h1 {
+            font-size: 64px;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 25px;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #2dd4bf, #00c6fb, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .hero-left p {
+            font-size: 18px;
+            color: #8a92b0;
+            margin-bottom: 35px;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 800;
+            color: #2dd4bf;
+        }
+
+        .hero-right {
+            background: rgba(15,19,34,0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 30px;
+            border: 1px solid rgba(45,212,191,0.3);
+        }
+
+        .live-price-card {
+            text-align: center;
+        }
+
+        .live-price-card h3 {
+            margin-bottom: 15px;
+            color: #2dd4bf;
+        }
+
+        .btc-price {
+            font-size: 48px;
+            font-weight: 800;
+            margin: 20px 0;
+        }
+
+        .price-change {
+            font-size: 18px;
+        }
+
+        .positive { color: #2dd4bf; }
+        .negative { color: #ff6b6b; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #0f1322;
+            border-radius: 24px;
+            padding: 40px;
+            width: 450px;
+            border: 1px solid #2dd4bf;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            background: #1a1f30;
+            border: 1px solid #2d3748;
+            border-radius: 10px;
             color: white;
         }
 
-        .btn-submit {
-            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
-            color: #0a0e17;
+        .modal-content button {
             width: 100%;
-            font-size: 16px;
+            padding: 14px;
+            margin-top: 15px;
+            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
         }
 
         .error-message {
-            background: rgba(255, 107, 107, 0.1);
+            background: rgba(255,107,107,0.1);
             border: 1px solid #ff6b6b;
             color: #ff6b6b;
             padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            font-size: 14px;
+            border-radius: 10px;
+            margin-bottom: 15px;
             display: none;
         }
 
-        .success-message {
-            background: rgba(45, 212, 191, 0.1);
-            border: 1px solid #2dd4bf;
-            color: #2dd4bf;
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            display: none;
-        }
-
-        .login-link {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            color: #8a92b0;
-        }
-
-        .login-link a {
-            color: #2dd4bf;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        @media (max-width: 768px) {
-            .register-card { padding: 25px; }
-            .form-grid { grid-template-columns: 1fr; }
-            .input-group.full-width { grid-column: span 1; }
-            .progress-step .step-label { display: none; }
-            .step-circle { width: 35px; height: 35px; font-size: 14px; }
-            .button-group { flex-direction: column; }
-            .btn-back { order: 2; }
-            .btn-next { order: 1; }
+        @media (max-width: 968px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+            }
+            .hero-left h1 {
+                font-size: 42px;
+            }
+            .navbar {
+                padding: 15px 20px;
+            }
         }
     </style>
 </head>
@@ -341,262 +300,67 @@
         <div class="orb orb-3"></div>
     </div>
 
-    <div class="register-container">
-        <div class="register-card">
-            <h1>Create Account</h1>
-            <p class="subtitle">Join the future of AI-powered trading</p>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="logo-text">ALGON FLOW</div>
+            </div>
+            <div class="auth-buttons">
+                <button class="btn-login" onclick="openLoginModal()">Sign In</button>
+                <button class="btn-signup" onclick="window.location.href='register.html'">Create Account</button>
+            </div>
+        </div>
+    </nav>
 
-            <div class="progress-bar">
-                <div class="progress-step active" data-step="1">
-                    <div class="step-circle">1</div>
-                    <div class="step-label">Personal</div>
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-left">
+                <h1>Trade Crypto with <span class="gradient-text">AI-Powered</span> Intelligence</h1>
+                <p>Join 50,000+ traders using Algon Flow's advanced AI algorithms. Earn up to 22% daily returns with our automated trading system.</p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-number" id="statUsers">50,000+</div>
+                        <div class="stat-label">Active Traders</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number" id="statVolume">$2.5B+</div>
+                        <div class="stat-label">Trading Volume</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">22%</div>
+                        <div class="stat-label">Max Daily ROI</div>
+                    </div>
                 </div>
-                <div class="progress-step" data-step="2">
-                    <div class="step-circle">2</div>
-                    <div class="step-label">Location</div>
-                </div>
-                <div class="progress-step" data-step="3">
-                    <div class="step-circle">3</div>
-                    <div class="step-label">Financial</div>
-                </div>
-                <div class="progress-step" data-step="4">
-                    <div class="step-circle">4</div>
-                    <div class="step-label">Security</div>
+                <div class="cta-buttons">
+                    <button class="btn-signup" onclick="window.location.href='register.html'" style="font-size: 16px;">Start Trading Now</button>
                 </div>
             </div>
-
-            <div id="errorMessage" class="error-message"></div>
-            <div id="successMessage" class="success-message"></div>
-
-            <form id="registerForm">
-                <!-- Step 1 -->
-                <div class="form-section active" data-section="1">
-                    <div class="form-grid">
-                        <div class="input-group full-width">
-                            <label><i class="fas fa-user"></i> Full Name <span class="required">*</span></label>
-                            <input type="text" id="fullName" required placeholder="John Doe">
-                        </div>
-                        <div class="input-group">
-                            <label><i class="fas fa-envelope"></i> Email <span class="required">*</span></label>
-                            <input type="email" id="email" required placeholder="trader@algonflow.com">
-                        </div>
-                        <div class="input-group">
-                            <label><i class="fas fa-calendar-alt"></i> Age <span class="required">*</span></label>
-                            <input type="number" id="age" required placeholder="25" min="18">
-                        </div>
-                        <div class="input-group">
-                            <label><i class="fas fa-lock"></i> Password <span class="required">*</span></label>
-                            <div class="password-wrapper">
-                                <input type="password" id="password" required placeholder="Min 6 characters">
-                                <i class="fas fa-eye password-toggle" onclick="togglePassword('password')"></i>
-                            </div>
-                        </div>
-                        <div class="input-group">
-                            <label><i class="fas fa-lock"></i> Confirm Password <span class="required">*</span></label>
-                            <div class="password-wrapper">
-                                <input type="password" id="confirmPassword" required placeholder="Confirm password">
-                                <i class="fas fa-eye password-toggle" onclick="togglePassword('confirmPassword')"></i>
-                            </div>
-                        </div>
-                        <div class="input-group">
-                            <label><i class="fas fa-briefcase"></i> Employment Status <span class="required">*</span></label>
-                            <select id="employmentStatus" required>
-                                <option value="">Select</option>
-                                <option value="Employed">Employed (Full Time)</option>
-                                <option value="Self-Employed">Self-Employed</option>
-                                <option value="Unemployed">Unemployed</option>
-                                <option value="Student">Student</option>
-                                <option value="Retired">Retired</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button type="button" class="btn-next" onclick="nextStep(2)">Next →</button>
+            <div class="hero-right">
+                <div class="live-price-card">
+                    <h3><i class="fab fa-bitcoin"></i> Bitcoin (BTC/USD)</h3>
+                    <div class="btc-price" id="btcPrice">Loading...</div>
+                    <div class="price-change" id="btcChange">Loading...</div>
+                    <div style="margin-top: 20px; font-size: 12px; color: #8a92b0;">
+                        <div>24h High: <span id="high24h">-</span></div>
+                        <div>24h Low: <span id="low24h">-</span></div>
+                        <div>24h Volume: <span id="volume">-</span></div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
 
-                <!-- Step 2: Location -->
-                <div class="form-section" data-section="2">
-                    <div class="form-grid">
-                        <div class="input-group full-width">
-                            <label><i class="fas fa-globe-americas"></i> Country <span class="required">*</span></label>
-                            <select id="country" required>
-                                <option value="">Select Country</option>
-                                <option value="United States">United States (+1)</option>
-                                <option value="United Kingdom">United Kingdom (+44)</option>
-                                <option value="Canada">Canada (+1)</option>
-                                <option value="Australia">Australia (+61)</option>
-                                <option value="Germany">Germany (+49)</option>
-                                <option value="France">France (+33)</option>
-                                <option value="Italy">Italy (+39)</option>
-                                <option value="Spain">Spain (+34)</option>
-                                <option value="Portugal">Portugal (+351)</option>
-                                <option value="Netherlands">Netherlands (+31)</option>
-                                <option value="Belgium">Belgium (+32)</option>
-                                <option value="Switzerland">Switzerland (+41)</option>
-                                <option value="Sweden">Sweden (+46)</option>
-                                <option value="Norway">Norway (+47)</option>
-                                <option value="Denmark">Denmark (+45)</option>
-                                <option value="Finland">Finland (+358)</option>
-                                <option value="Ireland">Ireland (+353)</option>
-                                <option value="Poland">Poland (+48)</option>
-                                <option value="Czech Republic">Czech Republic (+420)</option>
-                                <option value="Greece">Greece (+30)</option>
-                                <option value="Turkey">Turkey (+90)</option>
-                                <option value="Russia">Russia (+7)</option>
-                                <option value="China">China (+86)</option>
-                                <option value="Japan">Japan (+81)</option>
-                                <option value="South Korea">South Korea (+82)</option>
-                                <option value="India">India (+91)</option>
-                                <option value="Pakistan">Pakistan (+92)</option>
-                                <option value="Bangladesh">Bangladesh (+880)</option>
-                                <option value="Indonesia">Indonesia (+62)</option>
-                                <option value="Malaysia">Malaysia (+60)</option>
-                                <option value="Singapore">Singapore (+65)</option>
-                                <option value="Thailand">Thailand (+66)</option>
-                                <option value="Vietnam">Vietnam (+84)</option>
-                                <option value="Philippines">Philippines (+63)</option>
-                                <option value="Nigeria">Nigeria (+234)</option>
-                                <option value="Kenya">Kenya (+254)</option>
-                                <option value="South Africa">South Africa (+27)</option>
-                                <option value="Egypt">Egypt (+20)</option>
-                                <option value="Morocco">Morocco (+212)</option>
-                                <option value="Algeria">Algeria (+213)</option>
-                                <option value="Tunisia">Tunisia (+216)</option>
-                                <option value="Ghana">Ghana (+233)</option>
-                                <option value="Ethiopia">Ethiopia (+251)</option>
-                                <option value="Tanzania">Tanzania (+255)</option>
-                                <option value="Uganda">Uganda (+256)</option>
-                                <option value="Brazil">Brazil (+55)</option>
-                                <option value="Argentina">Argentina (+54)</option>
-                                <option value="Mexico">Mexico (+52)</option>
-                                <option value="Colombia">Colombia (+57)</option>
-                                <option value="Chile">Chile (+56)</option>
-                                <option value="Peru">Peru (+51)</option>
-                                <option value="Venezuela">Venezuela (+58)</option>
-                                <option value="Saudi Arabia">Saudi Arabia (+966)</option>
-                                <option value="UAE">UAE (+971)</option>
-                                <option value="Qatar">Qatar (+974)</option>
-                                <option value="Kuwait">Kuwait (+965)</option>
-                                <option value="Israel">Israel (+972)</option>
-                                <option value="New Zealand">New Zealand (+64)</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label><i class="fas fa-flag-usa"></i> Are you from the US? <span class="required">*</span></label>
-                            <select id="isFromUSA" required>
-                                <option value="no">No</option>
-                                <option value="yes">Yes</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label><i class="fas fa-phone"></i> Phone Number <span class="required">*</span></label>
-                            <input type="tel" id="phoneNumber" required placeholder="Phone number">
-                        </div>
-                        <div class="input-group">
-                            <label><i class="fas fa-code"></i> Country Code</label>
-                            <select id="countryCode">
-                                <option value="+1">+1</option><option value="+44">+44</option><option value="+61">+61</option>
-                                <option value="+49">+49</option><option value="+33">+33</option><option value="+39">+39</option>
-                                <option value="+34">+34</option><option value="+351">+351</option><option value="+31">+31</option>
-                                <option value="+32">+32</option><option value="+41">+41</option><option value="+46">+46</option>
-                                <option value="+47">+47</option><option value="+45">+45</option><option value="+358">+358</option>
-                                <option value="+353">+353</option><option value="+48">+48</option><option value="+420">+420</option>
-                                <option value="+30">+30</option><option value="+90">+90</option><option value="+7">+7</option>
-                                <option value="+86">+86</option><option value="+81">+81</option><option value="+82">+82</option>
-                                <option value="+91">+91</option><option value="+92">+92</option><option value="+880">+880</option>
-                                <option value="+62">+62</option><option value="+60">+60</option><option value="+65">+65</option>
-                                <option value="+66">+66</option><option value="+84">+84</option><option value="+63">+63</option>
-                                <option value="+234">+234</option><option value="+254">+254</option><option value="+27">+27</option>
-                                <option value="+20">+20</option><option value="+212">+212</option><option value="+213">+213</option>
-                                <option value="+216">+216</option><option value="+233">+233</option><option value="+251">+251</option>
-                                <option value="+255">+255</option><option value="+256">+256</option><option value="+55">+55</option>
-                                <option value="+54">+54</option><option value="+52">+52</option><option value="+57">+57</option>
-                                <option value="+56">+56</option><option value="+51">+51</option><option value="+58">+58</option>
-                                <option value="+966">+966</option><option value="+971">+971</option><option value="+974">+974</option>
-                                <option value="+965">+965</option><option value="+972">+972</option><option value="+64">+64</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button type="button" class="btn-back" onclick="prevStep(1)">← Back</button>
-                        <button type="button" class="btn-next" onclick="nextStep(3)">Next →</button>
-                    </div>
-                </div>
-
-                <!-- Step 3: Financial -->
-                <div class="form-section" data-section="3">
-                    <div class="form-grid">
-                        <div class="input-group full-width">
-                            <label><i class="fas fa-chart-bar"></i> Trading Experience <span class="required">*</span></label>
-                            <select id="tradingExperience" required>
-                                <option value="">Select Experience Level</option>
-                                <option value="Beginner">Beginner - New to trading</option>
-                                <option value="Intermediate">Intermediate - Some experience</option>
-                                <option value="Expert">Expert - Professional trader</option>
-                            </select>
-                        </div>
-                        <div class="input-group full-width">
-                            <label><i class="fas fa-money-bill-wave"></i> Source of Funds <span class="required">*</span></label>
-                            <select id="fundsSource" required>
-                                <option value="">Select Source of Funds</option>
-                                <option value="Personal Savings">💰 Personal Savings</option>
-                                <option value="Business Revenue">🏢 Business Revenue</option>
-                                <option value="Inheritance or Gift">🎁 Inheritance or Gift</option>
-                                <option value="Loan Proceeds">🏦 Loan Proceeds</option>
-                                <option value="Investment from Partners/Investors">🤝 Investment from Partners/Investors</option>
-                                <option value="Sale of Assets">🏠 Sale of Assets</option>
-                            </select>
-                        </div>
-                        <div class="input-group full-width">
-                            <label><i class="fas fa-dollar-sign"></i> Expected Initial Deposit (USD)</label>
-                            <select id="expectedDeposit">
-                                <option value="0-100">$0 - $100</option>
-                                <option value="100-500">$100 - $500</option>
-                                <option value="500-1000">$500 - $1,000</option>
-                                <option value="1000-5000">$1,000 - $5,000</option>
-                                <option value="5000-10000">$5,000 - $10,000</option>
-                                <option value="10000+">$10,000+</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button type="button" class="btn-back" onclick="prevStep(2)">← Back</button>
-                        <button type="button" class="btn-next" onclick="nextStep(4)">Next →</button>
-                    </div>
-                </div>
-
-                <!-- Step 4: Terms -->
-                <div class="form-section" data-section="4">
-                    <div class="form-grid">
-                        <div class="input-group full-width">
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="ageConfirm" required>
-                                <label>I confirm that I am at least 18 years of age <span class="required">*</span></label>
-                            </div>
-                        </div>
-                        <div class="input-group full-width">
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="termsAccepted" required>
-                                <label>I agree to the <a href="#">Terms and Conditions</a> and <a href="#">Privacy Policy</a> <span class="required">*</span></label>
-                            </div>
-                        </div>
-                        <div class="input-group full-width">
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="riskAcknowledged" required>
-                                <label>I acknowledge that trading involves significant risk and I may lose my invested capital <span class="required">*</span></label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button type="button" class="btn-back" onclick="prevStep(3)">← Back</button>
-                        <button type="submit" class="btn-submit" id="submitBtn">Create Account →</button>
-                    </div>
-                </div>
-            </form>
-
-            <div class="login-link">
-                Already have an account? <a href="index.html">Login Here</a>
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModals()" style="float: right; font-size: 28px; cursor: pointer;">&times;</span>
+            <h2 style="margin-bottom: 20px;">Welcome Back</h2>
+            <div id="loginError" class="error-message"></div>
+            <input type="email" id="loginEmail" placeholder="Email Address">
+            <input type="password" id="loginPassword" placeholder="Password">
+            <button onclick="handleLogin()">Sign In</button>
+            <div style="margin-top:15px; text-align:center;">
+                Don't have an account? <a href="register.html" style="color:#2dd4bf;">Create Account</a>
             </div>
         </div>
     </div>
@@ -604,154 +368,79 @@
     <script>
         // FIXED: Simple API URL - works on localhost AND Render
         const API_URL = window.location.origin;
-        
-        let currentStep = 1;
 
-        function togglePassword(fieldId) {
-            const field = document.getElementById(fieldId);
-            const icon = field.nextElementSibling;
-            if (field.type === 'password') {
-                field.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                field.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        }
-
-        function nextStep(step) {
-            if (currentStep === 1) {
-                const fullName = document.getElementById('fullName').value;
-                const email = document.getElementById('email').value;
-                const age = document.getElementById('age').value;
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
-                const employmentStatus = document.getElementById('employmentStatus').value;
-
-                if (!fullName || !email || !age || !password || !confirmPassword || !employmentStatus) {
-                    showError('Please fill in all required fields');
-                    return;
-                }
-                if (age < 18) { showError('You must be at least 18 years old'); return; }
-                if (password.length < 6) { showError('Password must be at least 6 characters'); return; }
-                if (password !== confirmPassword) { showError('Passwords do not match'); return; }
-                if (!email.includes('@')) { showError('Please enter a valid email address'); return; }
-            }
-
-            if (currentStep === 2) {
-                const country = document.getElementById('country').value;
-                const phoneNumber = document.getElementById('phoneNumber').value;
-                if (!country || !phoneNumber) {
-                    showError('Please fill in all required fields');
-                    return;
-                }
-            }
-
-            if (currentStep === 3) {
-                const tradingExperience = document.getElementById('tradingExperience').value;
-                const fundsSource = document.getElementById('fundsSource').value;
-                if (!tradingExperience || !fundsSource) {
-                    showError('Please fill in all required fields');
-                    return;
-                }
-            }
-
-            document.querySelector(`.form-section[data-section="${currentStep}"]`).classList.remove('active');
-            document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.remove('active');
-            document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.add('completed');
-            
-            currentStep = step;
-            document.querySelector(`.form-section[data-section="${currentStep}"]`).classList.add('active');
-            document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.add('active');
-            
-            document.getElementById('errorMessage').style.display = 'none';
-        }
-
-        function prevStep(step) {
-            document.querySelector(`.form-section[data-section="${currentStep}"]`).classList.remove('active');
-            document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.remove('active');
-            
-            currentStep = step;
-            document.querySelector(`.form-section[data-section="${currentStep}"]`).classList.add('active');
-            document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.add('active');
-            document.querySelector(`.progress-step[data-step="${currentStep + 1}"]`).classList.remove('completed');
-            
-            document.getElementById('errorMessage').style.display = 'none';
-        }
-
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            setTimeout(() => errorDiv.style.display = 'none', 4000);
-        }
-
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            if (!document.getElementById('ageConfirm').checked) {
-                showError('You must confirm that you are at least 18 years old');
-                return;
-            }
-            if (!document.getElementById('termsAccepted').checked) {
-                showError('You must accept the Terms and Conditions');
-                return;
-            }
-            if (!document.getElementById('riskAcknowledged').checked) {
-                showError('You must acknowledge the trading risks');
-                return;
-            }
-            
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = 'Creating Account...';
-            
-            const formData = {
-                fullName: document.getElementById('fullName').value,
-                email: document.getElementById('email').value,
-                age: parseInt(document.getElementById('age').value),
-                password: document.getElementById('password').value,
-                country: document.getElementById('country').value,
-                countryCode: document.getElementById('countryCode').value,
-                phoneNumber: document.getElementById('phoneNumber').value,
-                employmentStatus: document.getElementById('employmentStatus').value,
-                tradingExperience: document.getElementById('tradingExperience').value,
-                fundsSource: document.getElementById('fundsSource').value,
-                isFromUSA: document.getElementById('isFromUSA').value,
-                expectedDeposit: document.getElementById('expectedDeposit').value,
-                termsAccepted: true
-            };
-            
+        async function fetchBTCPrice() {
             try {
-                const response = await fetch(`${API_URL}/api/register`, {
+                const response = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
+                const data = await response.json();
+                const price = parseFloat(data.lastPrice);
+                const change = parseFloat(data.priceChangePercent);
+                const high = parseFloat(data.highPrice);
+                const low = parseFloat(data.lowPrice);
+                const volume = parseFloat(data.quoteVolume);
+                
+                document.getElementById('btcPrice').innerHTML = `$${price.toLocaleString()}`;
+                document.getElementById('btcChange').innerHTML = `${change >= 0 ? '▲' : '▼'} ${change.toFixed(2)}%`;
+                document.getElementById('btcChange').className = `price-change ${change >= 0 ? 'positive' : 'negative'}`;
+                document.getElementById('high24h').innerHTML = `$${high.toLocaleString()}`;
+                document.getElementById('low24h').innerHTML = `$${low.toLocaleString()}`;
+                document.getElementById('volume').innerHTML = `$${(volume / 1000000).toFixed(2)}M`;
+            } catch(e) {
+                document.getElementById('btcPrice').innerHTML = '$68,500';
+                document.getElementById('btcChange').innerHTML = '▲ +1.27%';
+                document.getElementById('btcChange').className = 'price-change positive';
+            }
+        }
+
+        fetchBTCPrice();
+        setInterval(fetchBTCPrice, 30000);
+
+        function openLoginModal() {
+            document.getElementById('loginModal').classList.add('active');
+        }
+
+        function closeModals() {
+            document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+
+            if (!email || !password) {
+                errorDiv.style.display = 'block';
+                errorDiv.textContent = 'Please enter email and password';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify({ email, password })
                 });
-                
                 const data = await response.json();
-                
+
                 if (data.success) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    document.getElementById('successMessage').style.display = 'block';
-                    document.getElementById('successMessage').textContent = 'Account created successfully! Redirecting to dashboard...';
-                    setTimeout(() => {
-                        window.location.href = data.user.isAdmin ? 'admin.html' : 'dashboard.html';
-                    }, 2000);
+                    window.location.href = data.user.isAdmin ? 'admin.html' : 'dashboard.html';
                 } else {
-                    showError(data.error || 'Registration failed');
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = 'Create Account →';
+                    errorDiv.style.display = 'block';
+                    errorDiv.textContent = data.error || 'Login failed';
+                    setTimeout(() => errorDiv.style.display = 'none', 3000);
                 }
-            } catch (error) {
-                showError('Connection error. Please make sure the server is running.');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Create Account →';
+            } catch(error) {
+                errorDiv.style.display = 'block';
+                errorDiv.textContent = 'Connection error. Please try again.';
+                setTimeout(() => errorDiv.style.display = 'none', 5000);
             }
-        });
+        }
+
+        window.onclick = (e) => {
+            if (e.target.classList.contains('modal')) closeModals();
+        };
     </script>
 </body>
 </html>
