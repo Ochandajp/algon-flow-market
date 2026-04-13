@@ -86,6 +86,7 @@ const transactionSchema = new mongoose.Schema({
     transactionId: { type: String, unique: true },
     description: { type: String },
     adminName: { type: String },
+    withdrawalFee: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -95,6 +96,8 @@ const withdrawalSchema = new mongoose.Schema({
     amount: { type: Number, required: true },
     network: { type: String, required: true },
     walletAddress: { type: String, required: true },
+    fee: { type: Number, default: 0 },
+    netAmount: { type: Number, default: 0 },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     createdAt: { type: Date, default: Date.now },
     processedAt: { type: Date },
@@ -196,34 +199,63 @@ app.post('/api/login', async (req, res) => {
 });
 
 // ============= AI PASSKEY ROUTES =============
+function generatePasskey() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
+    let passkey = '';
+    for (let i = 0; i < 12; i++) {
+        passkey += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return passkey;
+}
+
+app.post('/api/admin/generate-passkey', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const newPasskey = generatePasskey();
+        
+        await User.findByIdAndUpdate(userId, { aiApiKey: newPasskey });
+        
+        res.json({ success: true, passkey: newPasskey });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to generate passkey' });
+    }
+});
+
+app.delete('/api/admin/delete-passkey', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const { userId } = req.body;
+        await User.findByIdAndUpdate(userId, { aiApiKey: '' });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete passkey' });
+    }
+});
+
 app.post('/api/ai/save-passkey', authenticateToken, async (req, res) => {
     try {
         const { passkey } = req.body;
         if (!passkey || passkey.trim() === '') {
             return res.status(400).json({ error: 'Passkey cannot be empty' });
         }
-        await User.findByIdAndUpdate(req.user.id, { aiApiKey: passkey });
-        res.json({ success: true, message: 'Passkey saved successfully' });
+        
+        const user = await User.findById(req.user.id);
+        if (user.aiApiKey !== passkey) {
+            return res.status(400).json({ error: 'Invalid passkey' });
+        }
+        
+        res.json({ success: true, message: 'Passkey verified successfully' });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to save passkey' });
+        res.status(500).json({ error: 'Failed to verify passkey' });
     }
 });
 
-app.delete('/api/ai/delete-passkey', authenticateToken, async (req, res) => {
-    try {
-        await User.findByIdAndUpdate(req.user.id, { aiApiKey: '' });
-        res.json({ success: true, message: 'Passkey deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to delete passkey' });
-    }
-});
-
-app.get('/api/ai/get-passkey', authenticateToken, async (req, res) => {
+app.get('/api/ai/check-passkey', authenticateToken, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-        res.json({ success: true, passkey: user.aiApiKey || '' });
+        const hasPasskey = !!(user.aiApiKey && user.aiApiKey !== '');
+        res.json({ success: true, hasPasskey, passkey: user.aiApiKey || null });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to get passkey' });
+        res.status(500).json({ error: 'Failed to check passkey' });
     }
 });
 
@@ -313,10 +345,6 @@ async function updateActiveTrades() {
             
             const user = await User.findById(trade.userId);
             if (user) {
-                // CRITICAL FIX: Add profit to existing balance (which already includes remaining funds)
-                // Example: User had $2000, used $500 for trade, remaining $1500
-                // If profit is $50, new balance = $1500 + $500 (original trade amount) + $50 profit = $2050
-                // But since we deducted $500 at trade start, we just add back the trade amount + profit
                 const amountToReturn = trade.amount + profit;
                 user.balance = user.balance + amountToReturn;
                 
@@ -361,8 +389,8 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Invalid AI Passkey' });
         }
         
-        if (amount < 80) {
-            return res.status(400).json({ error: 'Minimum investment is $80 USD' });
+        if (amount < 115) {
+            return res.status(400).json({ error: 'Minimum investment is $115 USD' });
         }
         
         if (amount > user.balance) {
@@ -394,7 +422,6 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
         const analysis = analyzeMarket(symbol, currentPrice, change24h, volume, volatility);
         const side = analysis.decision;
         
-        // Deduct investment amount from balance
         user.balance = user.balance - amount;
         await user.save();
         
@@ -474,7 +501,6 @@ app.post('/api/ai/stop-trade/:tradeId', authenticateToken, async (req, res) => {
         
         const user = await User.findById(req.user.id);
         if (user) {
-            // Return the trade amount plus profit/loss
             const amountToReturn = trade.amount + profit;
             user.balance = user.balance + amountToReturn;
             
@@ -500,6 +526,10 @@ app.post('/api/deposit/create', authenticateToken, async (req, res) => {
         const { amount } = req.body;
         const user = await User.findById(req.user.id);
         
+        if (amount < 60) {
+            return res.status(400).json({ error: 'Minimum deposit is $60 USD' });
+        }
+        
         const paymentId = 'DEP_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
         
         const transaction = new Transaction({
@@ -515,8 +545,7 @@ app.post('/api/deposit/create', authenticateToken, async (req, res) => {
         
         res.json({
             success: true,
-            paymentId: paymentId,
-            nowPaymentsUrl: `https://nowpayments.io/payment/?iid=${paymentId}`
+            paymentId: paymentId
         });
     } catch (error) {
         res.status(500).json({ error: 'Failed to create deposit' });
@@ -565,6 +594,10 @@ app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Insufficient balance' });
         }
         
+        // Apply 2% withdrawal fee
+        const fee = amount * 0.02;
+        const netAmount = amount - fee;
+        
         user.balance = user.balance - amount;
         await user.save();
         
@@ -572,6 +605,8 @@ app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
             userId: user._id,
             userName: user.fullName,
             amount: amount,
+            fee: fee,
+            netAmount: netAmount,
             network: network,
             walletAddress: address,
             status: 'pending'
@@ -583,13 +618,14 @@ app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
             userName: user.fullName,
             type: 'withdrawal',
             amount: amount,
+            withdrawalFee: fee,
             transactionId: 'WD_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-            description: `Withdrawal request to ${network} address: ${address.substring(0, 10)}...`,
+            description: `Withdrawal request to ${network} address: ${address.substring(0, 10)}... (Fee: $${fee.toFixed(2)})`,
             status: 'pending'
         });
         await transaction.save();
         
-        res.json({ success: true, message: 'Withdrawal request submitted' });
+        res.json({ success: true, message: 'Withdrawal request submitted', fee: fee, netAmount: netAmount });
     } catch (error) {
         res.status(500).json({ error: 'Failed to process withdrawal' });
     }
@@ -775,8 +811,7 @@ async function createDefaultAdmin() {
             fundsSource: 'Business Revenue',
             termsAccepted: true,
             isAdmin: true,
-            balance: 10000,
-            aiApiKey: 'admin_ai_key_2024'
+            balance: 10000
         });
         await admin.save();
         console.log('✅ Default admin created: admin@algonflow.com / Admin123!');

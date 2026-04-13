@@ -245,6 +245,7 @@
         .search-filter {
             display: flex;
             gap: 12px;
+            flex-wrap: wrap;
         }
 
         .search-box {
@@ -315,6 +316,16 @@
             color: #ffc107;
         }
 
+        .status-approved {
+            background: rgba(45, 212, 191, 0.2);
+            color: #2dd4bf;
+        }
+
+        .status-rejected {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+
         .action-buttons {
             display: flex;
             gap: 8px;
@@ -358,6 +369,16 @@
 
         .action-btn.view {
             background: #00c6fb;
+            color: white;
+        }
+
+        .action-btn.key {
+            background: #764ba2;
+            color: white;
+        }
+
+        .action-btn.delete-key {
+            background: #ff6b6b;
             color: white;
         }
 
@@ -440,9 +461,35 @@
             animation: slideIn 0.3s ease;
         }
 
+        .toast.error {
+            background: #ff6b6b;
+            color: white;
+        }
+
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
+        }
+
+        .passkey-display {
+            background: #1a1f30;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 18px;
+            letter-spacing: 2px;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .copy-passkey {
+            background: #2dd4bf;
+            color: #0a0e17;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
         }
 
         @media (max-width: 1024px) {
@@ -536,7 +583,7 @@
                 </div>
                 <div class="charts-row">
                     <div class="chart-card">
-                        <h3><i class="fas fa-chart-line"></i> User Growth</h3>
+                        <h3><i class="fas fa-chart-line"></i> User Growth (Last 30 Days)</h3>
                         <canvas id="userGrowthChart"></canvas>
                     </div>
                     <div class="chart-card">
@@ -568,13 +615,14 @@
                                     <th>Contact</th>
                                     <th>Balance</th>
                                     <th>Experience</th>
+                                    <th>AI Passkey</th>
                                     <th>Status</th>
                                     <th>Joined</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="usersList">
-                                <tr><td colspan="7"><div class="loading">Loading users...</div></td></tr>
+                                <tr><td colspan="8"><div class="loading">Loading users...</div></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -593,6 +641,8 @@
                                 <tr>
                                     <th>User</th>
                                     <th>Amount</th>
+                                    <th>Fee (2%)</th>
+                                    <th>Net Amount</th>
                                     <th>Network</th>
                                     <th>Address</th>
                                     <th>Status</th>
@@ -601,7 +651,7 @@
                                 </tr>
                             </thead>
                             <tbody id="withdrawalsList">
-                                <tr><td colspan="7"><div class="loading">Loading withdrawals...</div></td></tr>
+                                <tr><td colspan="9"><div class="loading">Loading withdrawals...</div></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -622,12 +672,13 @@
                                     <th>User</th>
                                     <th>Type</th>
                                     <th>Amount</th>
+                                    <th>Fee</th>
                                     <th>Admin</th>
                                     <th>Date</th>
                                 </tr>
                             </thead>
                             <tbody id="transactionsList">
-                                <tr><td colspan="6"><div class="loading">Loading transactions...</div></td></tr>
+                                <tr><td colspan="7"><div class="loading">Loading transactions...</div></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -656,10 +707,23 @@
     </div>
 
     <div id="userModal" class="modal">
-        <div class="modal-content" style="width: 600px;">
+        <div class="modal-content" style="width: 700px;">
             <span class="close-modal" onclick="closeModal('userModal')" style="float: right; font-size: 28px; cursor: pointer;">&times;</span>
             <h3>User Details</h3>
             <div id="userDetails"></div>
+        </div>
+    </div>
+
+    <div id="passkeyModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('passkeyModal')" style="float: right; font-size: 28px; cursor: pointer;">&times;</span>
+            <h3><i class="fas fa-key"></i> AI Passkey</h3>
+            <p>Generate a 12-digit passkey for the user to activate AI trading.</p>
+            <div id="passkeyDisplay" class="passkey-display"></div>
+            <div class="modal-buttons">
+                <button onclick="copyPasskey()"><i class="fas fa-copy"></i> Copy Passkey</button>
+                <button onclick="closeModal('passkeyModal')">Close</button>
+            </div>
         </div>
     </div>
 
@@ -675,6 +739,7 @@
 
         let currentUsers = [];
         let userGrowthChart, experienceChart;
+        let generatedPasskey = '';
 
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', () => {
@@ -754,7 +819,7 @@
                 currentUsers = users;
                 renderUsersTable(users);
             } catch (error) {
-                document.getElementById('usersList').innerHTML = '<tr><td colspan="7">Error loading users</td></tr>';
+                document.getElementById('usersList').innerHTML = '<tr><td colspan="8">Error loading users</td></tr>';
             }
         }
 
@@ -769,7 +834,7 @@
             
             const tbody = document.getElementById('usersList');
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px;">No users found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:40px;">No users found</td></tr>';
                 return;
             }
             
@@ -779,16 +844,74 @@
                     <td>${user.country}<br><small>${user.countryCode} ${user.phoneNumber}</small></td>
                     <td><strong style="color:#2dd4bf">$${user.balance?.toLocaleString() || '0'}</strong><br><small>Deposits: $${(user.totalDeposits || 0).toLocaleString()}</small></td>
                     <td>${user.tradingExperience || 'N/A'}</td>
+                    <td>
+                        ${user.aiApiKey ? 
+                            `<span style="color:#2dd4bf; font-family:monospace;">${user.aiApiKey}</span><br>
+                             <small style="color:#8a92b0">Active</small>` : 
+                            `<span style="color:#ffc107;">No key</span>`}
+                    </td>
                     <td><span class="user-status ${user.isActive ? 'status-active' : 'status-inactive'}">${user.isActive ? 'Active' : 'Inactive'}</span></td>
                     <td><small>${new Date(user.createdAt).toLocaleDateString()}</small></td>
                     <td class="action-buttons">
                         <button class="action-btn add" onclick="openBalanceModal('${user._id}', '${user.fullName}', 'add')"><i class="fas fa-plus"></i> Add</button>
                         <button class="action-btn deduct" onclick="openBalanceModal('${user._id}', '${user.fullName}', 'deduct')"><i class="fas fa-minus"></i> Deduct</button>
+                        <button class="action-btn key" onclick="generatePasskey('${user._id}')"><i class="fas fa-key"></i> Gen Key</button>
+                        ${user.aiApiKey ? `<button class="action-btn delete-key" onclick="deletePasskey('${user._id}')"><i class="fas fa-trash"></i> Del Key</button>` : ''}
                         <button class="action-btn toggle" onclick="toggleUserStatus('${user._id}', ${!user.isActive})"><i class="fas fa-power-off"></i> ${user.isActive ? 'Disable' : 'Enable'}</button>
                         <button class="action-btn view" onclick="viewUserDetails('${user._id}')"><i class="fas fa-eye"></i> View</button>
                     </td>
                 </tr>
             `).join('');
+        }
+
+        async function generatePasskey(userId) {
+            if (!confirm('Generate a new 12-digit AI Passkey for this user? The old passkey will be replaced.')) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/api/admin/generate-passkey`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ userId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    generatedPasskey = data.passkey;
+                    document.getElementById('passkeyDisplay').innerHTML = data.passkey;
+                    document.getElementById('passkeyModal').classList.add('active');
+                    showToast(`New Passkey generated: ${data.passkey}`, 'success');
+                    loadUsers();
+                } else {
+                    showToast(data.error || 'Failed to generate passkey', 'error');
+                }
+            } catch (error) {
+                showToast('Error generating passkey', 'error');
+            }
+        }
+
+        function copyPasskey() {
+            navigator.clipboard.writeText(generatedPasskey);
+            showToast('Passkey copied to clipboard!', 'success');
+        }
+
+        async function deletePasskey(userId) {
+            if (!confirm('Delete the AI Passkey for this user? They will not be able to use AI trading.')) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/api/admin/delete-passkey`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ userId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Passkey deleted successfully', 'success');
+                    loadUsers();
+                } else {
+                    showToast(data.error || 'Failed to delete passkey', 'error');
+                }
+            } catch (error) {
+                showToast('Error deleting passkey', 'error');
+            }
         }
 
         async function loadWithdrawals() {
@@ -800,7 +923,7 @@
                 const tbody = document.getElementById('withdrawalsList');
                 
                 if (withdrawals.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px;">No withdrawal requests</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:40px;">No withdrawal requests</td></tr>';
                     return;
                 }
                 
@@ -808,9 +931,11 @@
                     <tr>
                         <td>${w.userName}</td>
                         <td><strong>$${w.amount.toLocaleString()}</strong></td>
+                        <td>$${w.fee?.toLocaleString() || '0'}</td>
+                        <td><strong style="color:#2dd4bf">$${w.netAmount?.toLocaleString() || '0'}</strong></td>
                         <td>${w.network}</td>
                         <td><small>${w.walletAddress.substring(0, 15)}...</small></td>
-                        <td><span class="user-status ${w.status === 'pending' ? 'status-pending' : w.status === 'approved' ? 'status-active' : 'status-inactive'}">${w.status}</span></td>
+                        <td><span class="user-status status-${w.status}">${w.status}</span></td>
                         <td><small>${new Date(w.createdAt).toLocaleString()}</small></td>
                         <td class="action-buttons">
                             ${w.status === 'pending' ? `
@@ -821,7 +946,7 @@
                     </tr>
                 `).join('');
             } catch (error) {
-                document.getElementById('withdrawalsList').innerHTML = '<tr><td colspan="7">Error loading withdrawals</td></tr>';
+                document.getElementById('withdrawalsList').innerHTML = '<tr><td colspan="9">Error loading withdrawals</td></tr>';
             }
         }
 
@@ -854,7 +979,7 @@
                 const tbody = document.getElementById('transactionsList');
                 
                 if (transactions.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px;">No transactions found</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px;">No transactions found</td></tr>';
                     return;
                 }
                 
@@ -864,12 +989,13 @@
                         <td>${t.userName}</td>
                         <td><span style="color: ${t.type === 'admin_deposit' ? '#2dd4bf' : t.type === 'admin_deduct' ? '#ffc107' : '#00c6fb'}">${t.type.replace('_', ' ').toUpperCase()}</span></td>
                         <td><strong>$${t.amount.toLocaleString()}</strong></td>
+                        <td>${t.withdrawalFee ? `$${t.withdrawalFee.toLocaleString()}` : '-'}</td>
                         <td><small>${t.adminName || 'System'}</small></td>
                         <td><small>${new Date(t.createdAt).toLocaleString()}</small></td>
                     </tr>
                 `).join('');
             } catch (error) {
-                document.getElementById('transactionsList').innerHTML = '<tr><td colspan="6">Error loading transactions</td></tr>';
+                document.getElementById('transactionsList').innerHTML = '<tr><td colspan="7">Error loading transactions</td></tr>';
             }
         }
 
@@ -961,6 +1087,7 @@
                         <p><strong>Balance:</strong> <span style="color:#2dd4bf; font-size:20px;">$${user.balance.toLocaleString()}</span></p>
                         <p><strong>Total Deposits:</strong> $${(user.totalDeposits || 0).toLocaleString()}</p>
                         <p><strong>Total Profit:</strong> $${(user.totalProfit || 0).toLocaleString()}</p>
+                        <p><strong>AI Passkey:</strong> ${user.aiApiKey ? `<span style="color:#2dd4bf; font-family:monospace;">${user.aiApiKey}</span>` : '<span style="color:#ffc107;">Not set</span>'}</p>
                         <p><strong>Joined:</strong> ${new Date(user.createdAt).toLocaleString()}</p>
                         <p><strong>Last Login:</strong> ${user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}</p>
                     </div>
@@ -994,9 +1121,7 @@
 
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.style.background = type === 'success' ? '#2dd4bf' : '#ff6b6b';
-            toast.style.color = '#0a0e17';
+            toast.className = 'toast' + (type === 'error' ? ' error' : '');
             toast.innerHTML = message;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);

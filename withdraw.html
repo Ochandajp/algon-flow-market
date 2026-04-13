@@ -145,8 +145,25 @@
             display: flex;
             justify-content: space-between;
             margin-top: 10px;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+        
+        .fee-info.highlight {
+            color: #2dd4bf;
+            font-weight: bold;
+            border-top: 1px solid rgba(45,212,191,0.2);
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+        
+        .warning-box {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 3px solid #ffc107;
+            padding: 12px;
+            margin: 15px 0;
             font-size: 12px;
-            color: #8a92b0;
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -171,13 +188,20 @@
                 <button class="preset-btn" data-amount="1000">$1,000</button>
                 <button class="preset-btn" data-amount="5000">$5,000</button>
             </div>
-            <div class="fee-info">
-                <span>Withdrawal Fee:</span>
-                <span>$0 (Free)</span>
+            <div class="warning-box">
+                <i class="fas fa-info-circle"></i> A 2% withdrawal fee applies to all withdrawals.
             </div>
             <div class="fee-info">
+                <span>Withdrawal Amount:</span>
+                <span id="displayAmount">$0</span>
+            </div>
+            <div class="fee-info">
+                <span>Withdrawal Fee (2%):</span>
+                <span id="feeAmount" style="color: #ffc107;">$0</span>
+            </div>
+            <div class="fee-info highlight">
                 <span>You will receive:</span>
-                <span id="receiveAmount">$0</span>
+                <span id="receiveAmount" style="color: #2dd4bf; font-size: 18px;">$0</span>
             </div>
         </div>
         
@@ -208,7 +232,8 @@
         
         <div class="info-box">
             <i class="fas fa-clock"></i> Withdrawals are processed within 24-48 hours after admin approval.<br>
-            <i class="fas fa-shield-alt"></i> For security, withdrawals require email verification.
+            <i class="fas fa-shield-alt"></i> For security, withdrawals require email verification.<br>
+            <i class="fas fa-percent"></i> 2% fee is deducted from your withdrawal amount.
         </div>
         
         <a href="dashboard.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
@@ -238,16 +263,28 @@
         }
     }
     
+    function calculateFee(amount) {
+        const fee = amount * 0.02;
+        const netAmount = amount - fee;
+        return { fee, netAmount };
+    }
+    
     document.getElementById('withdrawAmount').addEventListener('input', function() {
         const amount = parseFloat(this.value) || 0;
-        document.getElementById('receiveAmount').innerHTML = `$${amount.toFixed(2)}`;
+        const { fee, netAmount } = calculateFee(amount);
+        document.getElementById('displayAmount').innerHTML = `$${amount.toFixed(2)}`;
+        document.getElementById('feeAmount').innerHTML = `$${fee.toFixed(2)}`;
+        document.getElementById('receiveAmount').innerHTML = `$${netAmount.toFixed(2)}`;
     });
     
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.onclick = () => {
-            const amount = btn.dataset.amount;
+            const amount = parseFloat(btn.dataset.amount);
             document.getElementById('withdrawAmount').value = amount;
-            document.getElementById('receiveAmount').innerHTML = `$${amount}`;
+            const { fee, netAmount } = calculateFee(amount);
+            document.getElementById('displayAmount').innerHTML = `$${amount.toFixed(2)}`;
+            document.getElementById('feeAmount').innerHTML = `$${fee.toFixed(2)}`;
+            document.getElementById('receiveAmount').innerHTML = `$${netAmount.toFixed(2)}`;
         };
     });
     
@@ -256,6 +293,7 @@
         const network = document.getElementById('network').value;
         const address = document.getElementById('walletAddress').value;
         const confirmEmail = document.getElementById('confirmEmail').value;
+        const { fee, netAmount } = calculateFee(amount);
         
         if (!amount || amount < 50) {
             alert('⚠️ Minimum withdrawal amount is $50 USD');
@@ -282,7 +320,7 @@
             return;
         }
         
-        if (!confirm(`📤 Withdrawal Request Summary:\n\nAmount: $${amount}\nNetwork: ${network}\nAddress: ${address.substring(0, 15)}...\n\nProcessing time: 24-48 hours\n\nConfirm withdrawal request?`)) {
+        if (!confirm(`📤 Withdrawal Request Summary:\n\nAmount: $${amount}\nFee (2%): $${fee.toFixed(2)}\nNet Amount: $${netAmount.toFixed(2)}\nNetwork: ${network}\nAddress: ${address.substring(0, 15)}...\n\nProcessing time: 24-48 hours\n\nConfirm withdrawal request?`)) {
             return;
         }
         
@@ -299,11 +337,10 @@
             const data = await response.json();
             
             if (data.success) {
-                alert(`✅ Withdrawal request submitted successfully!\n\nAmount: $${amount}\nNetwork: ${network}\n\nYour request will be processed within 24-48 hours.\nYou will receive a confirmation email once processed.`);
+                alert(`✅ Withdrawal request submitted successfully!\n\nAmount: $${amount}\nFee: $${data.fee?.toFixed(2) || fee.toFixed(2)}\nNet: $${data.netAmount?.toFixed(2) || netAmount.toFixed(2)}\nNetwork: ${network}\n\nYour request will be processed within 24-48 hours.\nYou will receive a confirmation email once processed.`);
                 window.location.href = 'dashboard.html';
             } else {
                 alert('❌ ' + (data.error || 'Withdrawal failed'));
-                // Reload balance to show correct amount if withdrawal failed
                 loadBalance();
             }
         } catch (error) {

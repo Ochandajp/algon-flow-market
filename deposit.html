@@ -186,6 +186,14 @@
             cursor: pointer;
             margin-top: 10px;
         }
+
+        .info-note {
+            background: rgba(45,212,191,0.1);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 20px;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -196,9 +204,9 @@
         
         <div class="amount-input">
             <label>Amount (USD)</label>
-            <input type="number" id="amount" placeholder="Enter amount" min="80" step="10">
+            <input type="number" id="amount" placeholder="Enter amount" min="60" step="10">
             <div class="preset-amounts">
-                <button class="preset-btn" data-amount="80">$80</button>
+                <button class="preset-btn" data-amount="60">$60</button>
                 <button class="preset-btn" data-amount="115">$115</button>
                 <button class="preset-btn" data-amount="250">$250</button>
                 <button class="preset-btn" data-amount="500">$500</button>
@@ -206,7 +214,11 @@
                 <button class="preset-btn" data-amount="5000">$5,000</button>
                 <button class="preset-btn" data-amount="10000">$10,000</button>
             </div>
-            <div class="min-note"><i class="fas fa-info-circle"></i> Minimum deposit: $80 USD</div>
+            <div class="min-note"><i class="fas fa-info-circle"></i> Minimum deposit: $60 USD</div>
+        </div>
+        
+        <div class="info-note">
+            <i class="fas fa-info-circle"></i> After depositing, you can start AI trading with a minimum of $115 USD.
         </div>
         
         <button class="deposit-btn" id="depositNowBtn"><i class="fas fa-credit-card"></i> Generate Payment</button>
@@ -243,8 +255,8 @@
     document.getElementById('depositNowBtn').onclick = async () => {
         const amount = parseFloat(document.getElementById('amount').value);
         
-        if (!amount || amount < 80) {
-            alert('⚠️ Minimum deposit amount is $80 USD');
+        if (!amount || amount < 60) {
+            alert('⚠️ Minimum deposit amount is $60 USD');
             return;
         }
         
@@ -281,7 +293,8 @@
                         </button>
                         <p style="margin-top: 15px; font-size: 12px; color: #8a92b0;">
                             ⚠️ Send only USDT on TRC20 network.<br>
-                            Payment will be confirmed automatically after 1 network confirmation.
+                            Payment will be confirmed automatically after 1 network confirmation.<br>
+                            After confirmation, funds will be added to your balance.
                         </p>
                     </div>
                 `;
