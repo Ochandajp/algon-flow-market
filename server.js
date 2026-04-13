@@ -10,7 +10,7 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware - Allow all origins for cross-platform access
+// CRITICAL: Allow ALL origins - this allows any frontend (local, Netlify, Vercel) to connect
 app.use(cors({
     origin: '*',
     credentials: true,
@@ -94,10 +94,9 @@ const withdrawalSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     userName: { type: String, required: true },
     amount: { type: Number, required: true },
+    feeAmount: { type: Number, default: 0 },
     network: { type: String, required: true },
     walletAddress: { type: String, required: true },
-    fee: { type: Number, default: 0 },
-    netAmount: { type: Number, default: 0 },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     createdAt: { type: Date, default: Date.now },
     processedAt: { type: Date },
@@ -128,6 +127,16 @@ const isAdmin = async (req, res, next) => {
     if (!user || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' });
     next();
 };
+
+// Helper function to generate 12-digit alphanumeric passkey
+function generatePasskey() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
+    let passkey = '';
+    for (let i = 0; i < 12; i++) {
+        passkey += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return passkey;
+}
 
 // ============= AUTH ROUTES =============
 app.post('/api/register', async (req, res) => {
@@ -199,63 +208,68 @@ app.post('/api/login', async (req, res) => {
 });
 
 // ============= AI PASSKEY ROUTES =============
-function generatePasskey() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
-    let passkey = '';
-    for (let i = 0; i < 12; i++) {
-        passkey += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return passkey;
-}
-
-app.post('/api/admin/generate-passkey', authenticateToken, isAdmin, async (req, res) => {
+// Admin: Generate a new passkey for a user
+app.post('/api/admin/generate-passkey/:userId', authenticateToken, isAdmin, async (req, res) => {
     try {
-        const { userId } = req.body;
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        
         const newPasskey = generatePasskey();
+        user.aiApiKey = newPasskey;
+        await user.save();
         
-        await User.findByIdAndUpdate(userId, { aiApiKey: newPasskey });
-        
-        res.json({ success: true, passkey: newPasskey });
+        res.json({ success: true, passkey: newPasskey, message: `Passkey generated for ${user.fullName}` });
     } catch (error) {
         res.status(500).json({ error: 'Failed to generate passkey' });
     }
 });
 
-app.delete('/api/admin/delete-passkey', authenticateToken, isAdmin, async (req, res) => {
+// Admin: Delete/Revoke passkey for a user
+app.delete('/api/admin/delete-passkey/:userId', authenticateToken, isAdmin, async (req, res) => {
     try {
-        const { userId } = req.body;
-        await User.findByIdAndUpdate(userId, { aiApiKey: '' });
-        res.json({ success: true });
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        
+        user.aiApiKey = '';
+        await user.save();
+        
+        res.json({ success: true, message: `Passkey revoked for ${user.fullName}` });
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete passkey' });
     }
 });
 
+// User: Save their own passkey
 app.post('/api/ai/save-passkey', authenticateToken, async (req, res) => {
     try {
         const { passkey } = req.body;
         if (!passkey || passkey.trim() === '') {
             return res.status(400).json({ error: 'Passkey cannot be empty' });
         }
-        
-        const user = await User.findById(req.user.id);
-        if (user.aiApiKey !== passkey) {
-            return res.status(400).json({ error: 'Invalid passkey' });
-        }
-        
-        res.json({ success: true, message: 'Passkey verified successfully' });
+        await User.findByIdAndUpdate(req.user.id, { aiApiKey: passkey });
+        res.json({ success: true, message: 'Passkey saved successfully' });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to verify passkey' });
+        res.status(500).json({ error: 'Failed to save passkey' });
     }
 });
 
-app.get('/api/ai/check-passkey', authenticateToken, async (req, res) => {
+// User: Delete their own passkey
+app.delete('/api/ai/delete-passkey', authenticateToken, async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(req.user.id, { aiApiKey: '' });
+        res.json({ success: true, message: 'Passkey deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete passkey' });
+    }
+});
+
+// User: Get their own passkey
+app.get('/api/ai/get-passkey', authenticateToken, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-        const hasPasskey = !!(user.aiApiKey && user.aiApiKey !== '');
-        res.json({ success: true, hasPasskey, passkey: user.aiApiKey || null });
+        res.json({ success: true, passkey: user.aiApiKey || '' });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to check passkey' });
+        res.status(500).json({ error: 'Failed to get passkey' });
     }
 });
 
@@ -379,6 +393,7 @@ async function updateActiveTrades() {
 
 setInterval(updateActiveTrades, 5000);
 
+// ============= AI START TRADE (Minimum $115 required) =============
 app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
     try {
         const { symbol, symbolName, category, amount, leverage, duration, durationMs, passkey } = req.body;
@@ -389,8 +404,9 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Invalid AI Passkey' });
         }
         
+        // MINIMUM $115 FOR AI TRADING
         if (amount < 115) {
-            return res.status(400).json({ error: 'Minimum investment is $115 USD' });
+            return res.status(400).json({ error: 'Minimum AI trade amount is $115 USD' });
         }
         
         if (amount > user.balance) {
@@ -422,6 +438,7 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
         const analysis = analyzeMarket(symbol, currentPrice, change24h, volume, volatility);
         const side = analysis.decision;
         
+        // Deduct investment amount from balance
         user.balance = user.balance - amount;
         await user.save();
         
@@ -520,12 +537,13 @@ app.post('/api/ai/stop-trade/:tradeId', authenticateToken, async (req, res) => {
     }
 });
 
-// ============= DEPOSIT ROUTES =============
+// ============= DEPOSIT ROUTES (Minimum $60) =============
 app.post('/api/deposit/create', authenticateToken, async (req, res) => {
     try {
         const { amount } = req.body;
         const user = await User.findById(req.user.id);
         
+        // Minimum deposit $60
         if (amount < 60) {
             return res.status(400).json({ error: 'Minimum deposit is $60 USD' });
         }
@@ -580,7 +598,7 @@ app.get('/api/deposit/check/:paymentId', authenticateToken, async (req, res) => 
     }
 });
 
-// ============= WITHDRAWAL ROUTES =============
+// ============= WITHDRAWAL ROUTES (2% fee) =============
 app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
     try {
         const { amount, network, address } = req.body;
@@ -590,13 +608,13 @@ app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Minimum withdrawal is $50' });
         }
         
+        // Calculate 2% fee
+        const feeAmount = amount * 0.02;
+        const netAmount = amount - feeAmount;
+        
         if (amount > user.balance) {
             return res.status(400).json({ error: 'Insufficient balance' });
         }
-        
-        // Apply 2% withdrawal fee
-        const fee = amount * 0.02;
-        const netAmount = amount - fee;
         
         user.balance = user.balance - amount;
         await user.save();
@@ -605,8 +623,7 @@ app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
             userId: user._id,
             userName: user.fullName,
             amount: amount,
-            fee: fee,
-            netAmount: netAmount,
+            feeAmount: feeAmount,
             network: network,
             walletAddress: address,
             status: 'pending'
@@ -618,14 +635,14 @@ app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
             userName: user.fullName,
             type: 'withdrawal',
             amount: amount,
-            withdrawalFee: fee,
+            withdrawalFee: feeAmount,
             transactionId: 'WD_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-            description: `Withdrawal request to ${network} address: ${address.substring(0, 10)}... (Fee: $${fee.toFixed(2)})`,
+            description: `Withdrawal request to ${network} address: ${address.substring(0, 10)}... (2% fee: $${feeAmount.toFixed(2)})`,
             status: 'pending'
         });
         await transaction.save();
         
-        res.json({ success: true, message: 'Withdrawal request submitted', fee: fee, netAmount: netAmount });
+        res.json({ success: true, message: 'Withdrawal request submitted', feeAmount: feeAmount, netAmount: netAmount });
     } catch (error) {
         res.status(500).json({ error: 'Failed to process withdrawal' });
     }
@@ -811,14 +828,15 @@ async function createDefaultAdmin() {
             fundsSource: 'Business Revenue',
             termsAccepted: true,
             isAdmin: true,
-            balance: 10000
+            balance: 10000,
+            aiApiKey: 'ADMIN2024KEY'
         });
         await admin.save();
         console.log('✅ Default admin created: admin@algonflow.com / Admin123!');
     }
 }
 
-// Serve HTML files
+// Serve HTML files (optional - if you want to serve from Render)
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/index.html', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
@@ -837,5 +855,6 @@ app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.ht
 app.listen(PORT, async () => {
     await createDefaultAdmin();
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📱 Access from anywhere via your Render URL`);
+    console.log(`✅ CORS enabled for all origins - frontend can be hosted anywhere!`);
+    console.log(`📱 Backend API available at: https://algon-flow-market.onrender.com`);
 });

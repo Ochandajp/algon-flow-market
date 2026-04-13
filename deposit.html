@@ -6,201 +6,34 @@
     <title>Deposit Funds | Algon Flow</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        
-        body {
-            background: #0a0e17;
-            color: #e0e3eb;
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 80px 20px 40px;
-        }
-        
-        .deposit-card {
-            background: #0f1322;
-            border-radius: 24px;
-            border: 1px solid rgba(45,212,191,0.3);
-            padding: 30px;
-        }
-        
-        .deposit-card h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        
-        .subtitle {
-            text-align: center;
-            color: #8a92b0;
-            margin-bottom: 30px;
-        }
-        
-        .amount-input {
-            margin: 20px 0;
-        }
-        
-        .amount-input label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        
-        .amount-input input {
-            width: 100%;
-            padding: 15px;
-            background: #1a1f30;
-            border: 1px solid #2d3748;
-            border-radius: 12px;
-            color: white;
-            font-size: 24px;
-            text-align: center;
-        }
-        
-        .preset-amounts {
-            display: flex;
-            gap: 10px;
-            margin: 15px 0;
-            flex-wrap: wrap;
-        }
-        
-        .preset-btn {
-            background: #1a1f30;
-            border: 1px solid #2d3748;
-            padding: 8px 16px;
-            border-radius: 30px;
-            color: white;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        
-        .preset-btn:hover {
-            border-color: #2dd4bf;
-            color: #2dd4bf;
-        }
-        
-        .min-note {
-            font-size: 12px;
-            color: #ffc107;
-            margin-top: 5px;
-        }
-        
-        .deposit-btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
-            border: none;
-            border-radius: 12px;
-            color: #0a0e17;
-            font-weight: 700;
-            font-size: 18px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        
-        .payment-info {
-            margin-top: 25px;
-            padding: 15px;
-            background: rgba(45,212,191,0.1);
-            border-radius: 12px;
-            display: none;
-        }
-        
-        .payment-info.active {
-            display: block;
-        }
-        
-        .status-check {
-            margin-top: 20px;
-            text-align: center;
-        }
-        
-        .check-status-btn {
-            background: #2d3748;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 30px;
-            color: white;
-            cursor: pointer;
-        }
-        
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-            color: #2dd4bf;
-            text-decoration: none;
-        }
-        
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(45,212,191,0.3);
-            border-top-color: #2dd4bf;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .qr-code {
-            text-align: center;
-            margin: 20px 0;
-        }
-        
-        .qr-code img {
-            width: 200px;
-            height: 200px;
-            background: white;
-            padding: 10px;
-            border-radius: 20px;
-        }
-        
-        .address-box {
-            background: #1a1f30;
-            padding: 12px;
-            border-radius: 10px;
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 12px;
-            margin: 10px 0;
-        }
-        
-        .copy-btn {
-            background: #2dd4bf;
-            color: #0a0e17;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .info-note {
-            background: rgba(45,212,191,0.1);
-            border-radius: 10px;
-            padding: 12px;
-            margin-top: 20px;
-            font-size: 12px;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { background: #0a0e17; color: #e0e3eb; min-height: 100vh; }
+        .container { max-width: 500px; margin: 0 auto; padding: 80px 20px 40px; }
+        .deposit-card { background: #0f1322; border-radius: 24px; border: 1px solid rgba(45,212,191,0.3); padding: 30px; }
+        .deposit-card h1 { font-size: 28px; margin-bottom: 10px; text-align: center; }
+        .subtitle { text-align: center; color: #8a92b0; margin-bottom: 30px; }
+        .amount-input { margin: 20px 0; }
+        .amount-input label { display: block; margin-bottom: 10px; font-weight: 600; }
+        .amount-input input { width: 100%; padding: 15px; background: #1a1f30; border: 1px solid #2d3748; border-radius: 12px; color: white; font-size: 24px; text-align: center; }
+        .preset-amounts { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
+        .preset-btn { background: #1a1f30; border: 1px solid #2d3748; padding: 8px 16px; border-radius: 30px; color: white; cursor: pointer; transition: 0.2s; }
+        .preset-btn:hover { border-color: #2dd4bf; color: #2dd4bf; }
+        .min-note { font-size: 12px; color: #ffc107; margin-top: 5px; }
+        .deposit-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #2dd4bf, #00c6fb); border: none; border-radius: 12px; color: #0a0e17; font-weight: 700; font-size: 18px; cursor: pointer; margin-top: 20px; }
+        .payment-info { margin-top: 25px; padding: 15px; background: rgba(45,212,191,0.1); border-radius: 12px; display: none; }
+        .payment-info.active { display: block; }
+        .status-check { margin-top: 20px; text-align: center; }
+        .check-status-btn { background: #2d3748; border: none; padding: 10px 20px; border-radius: 30px; color: white; cursor: pointer; }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #2dd4bf; text-decoration: none; }
+        .address-box { background: #1a1f30; padding: 12px; border-radius: 10px; word-break: break-all; font-family: monospace; font-size: 12px; margin: 10px 0; }
+        .copy-btn { background: #2dd4bf; color: #0a0e17; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="deposit-card">
         <h1><i class="fas fa-plus-circle"></i> Deposit Funds</h1>
-        <p class="subtitle">Add funds to start trading with AI</p>
+        <p class="subtitle">Minimum deposit: $60 USD</p>
         
         <div class="amount-input">
             <label>Amount (USD)</label>
@@ -212,13 +45,8 @@
                 <button class="preset-btn" data-amount="500">$500</button>
                 <button class="preset-btn" data-amount="1000">$1,000</button>
                 <button class="preset-btn" data-amount="5000">$5,000</button>
-                <button class="preset-btn" data-amount="10000">$10,000</button>
             </div>
             <div class="min-note"><i class="fas fa-info-circle"></i> Minimum deposit: $60 USD</div>
-        </div>
-        
-        <div class="info-note">
-            <i class="fas fa-info-circle"></i> After depositing, you can start AI trading with a minimum of $115 USD.
         </div>
         
         <button class="deposit-btn" id="depositNowBtn"><i class="fas fa-credit-card"></i> Generate Payment</button>
@@ -236,7 +64,7 @@
 </div>
 
 <script>
-    const API_URL = window.location.origin;
+    const API_URL = 'https://algon-flow-market.onrender.com';
     
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -281,9 +109,6 @@
                 paymentDiv.innerHTML = `
                     <div style="text-align: center;">
                         <p style="margin-bottom: 15px;">Send exactly <strong style="color: #2dd4bf; font-size: 20px;">$${amount} USDT</strong> to the address below:</p>
-                        <div class="qr-code">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${demoAddress}" alt="QR Code">
-                        </div>
                         <div class="address-box">
                             <strong>USDT (TRC20) Address:</strong><br>
                             ${demoAddress}
@@ -293,8 +118,7 @@
                         </button>
                         <p style="margin-top: 15px; font-size: 12px; color: #8a92b0;">
                             ⚠️ Send only USDT on TRC20 network.<br>
-                            Payment will be confirmed automatically after 1 network confirmation.<br>
-                            After confirmation, funds will be added to your balance.
+                            Payment will be confirmed automatically after 1 network confirmation.
                         </p>
                     </div>
                 `;

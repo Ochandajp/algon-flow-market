@@ -237,8 +237,13 @@
             font-size: 18px;
         }
 
-        .positive { color: #2dd4bf; }
-        .negative { color: #ff6b6b; }
+        .positive {
+            color: #2dd4bf;
+        }
+
+        .negative {
+            color: #ff6b6b;
+        }
 
         .features-section {
             position: relative;
@@ -367,6 +372,7 @@
 
         .modal-content h2 {
             margin-bottom: 20px;
+            color: #2dd4bf;
         }
 
         .modal-content input {
@@ -378,6 +384,11 @@
             border-radius: 10px;
             color: white;
             font-size: 16px;
+        }
+
+        .modal-content input:focus {
+            outline: none;
+            border-color: #2dd4bf;
         }
 
         .modal-content button {
@@ -401,6 +412,7 @@
             border-radius: 10px;
             margin-bottom: 15px;
             display: none;
+            font-size: 14px;
         }
 
         .footer {
@@ -417,24 +429,12 @@
         }
 
         @media (max-width: 968px) {
-            .hero-content {
-                grid-template-columns: 1fr;
-            }
-            .hero-left h1 {
-                font-size: 42px;
-            }
-            .navbar {
-                padding: 15px 20px;
-            }
-            .hero {
-                padding: 100px 20px 60px;
-            }
-            .features-section, .about-section {
-                padding: 50px 20px;
-            }
-            .about-content {
-                grid-template-columns: 1fr;
-            }
+            .hero-content { grid-template-columns: 1fr; }
+            .hero-left h1 { font-size: 42px; }
+            .navbar { padding: 15px 20px; }
+            .hero { padding: 100px 20px 60px; }
+            .features-section, .about-section { padding: 50px 20px; }
+            .about-content { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -464,18 +464,9 @@
                 <h1>Trade Crypto with <span class="gradient-text">AI-Powered</span> Intelligence</h1>
                 <p>Join 50,000+ traders using Algon Flow's advanced AI algorithms. Our proprietary trading system uses machine learning to analyze market patterns and execute trades with up to 92% accuracy.</p>
                 <div class="hero-stats">
-                    <div class="stat">
-                        <div class="stat-number" id="statUsers">50,000+</div>
-                        <div class="stat-label">Active Traders</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-number" id="statVolume">$2.5B+</div>
-                        <div class="stat-label">Trading Volume</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-number">22%</div>
-                        <div class="stat-label">Max Daily ROI</div>
-                    </div>
+                    <div class="stat"><div class="stat-number">50,000+</div><div class="stat-label">Active Traders</div></div>
+                    <div class="stat"><div class="stat-number">$2.5B+</div><div class="stat-label">Trading Volume</div></div>
+                    <div class="stat"><div class="stat-number">22%</div><div class="stat-label">Max Daily ROI</div></div>
                 </div>
                 <button class="btn-signup" onclick="window.location.href='register.html'" style="font-size: 16px; padding: 14px 35px;">Start Trading Now →</button>
             </div>
@@ -497,36 +488,12 @@
     <section class="features-section">
         <h2 class="section-title">Why Choose <span class="gradient-text">Algon Flow</span></h2>
         <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-robot"></i></div>
-                <h3>AI-Powered Trading</h3>
-                <p>Our advanced AI algorithms analyze market trends in real-time, providing you with accurate trading signals and automated execution.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
-                <h3>Secure & Safe</h3>
-                <p>Bank-level security with 256-bit encryption, 2FA authentication, and cold storage for all digital assets.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
-                <h3>High Returns</h3>
-                <p>Earn up to 22% daily returns with our AI-managed trading strategies. Minimum investment of just $80.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-clock"></i></div>
-                <h3>24/7 Support</h3>
-                <p>Our dedicated support team is available around the clock to assist you with any questions or issues.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-mobile-alt"></i></div>
-                <h3>Mobile Friendly</h3>
-                <p>Access your account and trade from anywhere using any device - desktop, tablet, or smartphone.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-coins"></i></div>
-                <h3>Multiple Assets</h3>
-                <p>Trade cryptocurrencies, commodities, and forex pairs all from a single platform.</p>
-            </div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-robot"></i></div><h3>AI-Powered Trading</h3><p>Our advanced AI algorithms analyze market trends in real-time, providing you with accurate trading signals and automated execution.</p></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-shield-alt"></i></div><h3>Secure & Safe</h3><p>Bank-level security with 256-bit encryption, 2FA authentication, and cold storage for all digital assets.</p></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-chart-line"></i></div><h3>High Returns</h3><p>Earn up to 22% daily returns with our AI-managed trading strategies. Minimum investment of just $115.</p></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-clock"></i></div><h3>24/7 Support</h3><p>Our dedicated support team is available around the clock to assist you with any questions or issues.</p></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-mobile-alt"></i></div><h3>Mobile Friendly</h3><p>Access your account and trade from anywhere using any device - desktop, tablet, or smartphone.</p></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-coins"></i></div><h3>Multiple Assets</h3><p>Trade cryptocurrencies, commodities, and forex pairs all from a single platform.</p></div>
         </div>
     </section>
 
@@ -536,28 +503,12 @@
                 <h2>About <span class="gradient-text">Algon Flow</span></h2>
                 <p>Founded in 2021, Algon Flow has quickly become a leading AI-powered trading platform, serving over 50,000 active traders worldwide. Our mission is to democratize access to sophisticated trading algorithms that were once only available to institutional investors.</p>
                 <p>Our team consists of experienced quantitative analysts, software engineers, and financial experts who have worked at top investment banks and hedge funds. We combine cutting-edge machine learning with proven trading strategies to deliver consistent returns for our users.</p>
-                <div class="about-stats">
-                    <div class="about-stat">
-                        <div class="number">50K+</div>
-                        <div class="label">Active Users</div>
-                    </div>
-                    <div class="about-stat">
-                        <div class="number">$2.5B+</div>
-                        <div class="label">Volume Traded</div>
-                    </div>
-                    <div class="about-stat">
-                        <div class="number">99.9%</div>
-                        <div class="label">Uptime</div>
-                    </div>
-                </div>
+                <div class="about-stats"><div class="about-stat"><div class="number">50K+</div><div class="label">Active Users</div></div><div class="about-stat"><div class="number">$2.5B+</div><div class="label">Volume Traded</div></div><div class="about-stat"><div class="number">99.9%</div><div class="label">Uptime</div></div></div>
             </div>
             <div class="about-text">
                 <h2>Our <span class="gradient-text">Technology</span></h2>
                 <p>Algon Flow uses a proprietary AI engine that combines:</p>
-                <p>🔹 <strong>Deep Learning Models</strong> - Neural networks that predict price movements<br>
-                🔹 <strong>Natural Language Processing</strong> - Analyzing news sentiment in real-time<br>
-                🔹 <strong>Reinforcement Learning</strong> - Continuously improving trading strategies<br>
-                🔹 <strong>High-Frequency Data Analysis</strong> - Processing millions of data points per second</p>
+                <p>🔹 <strong>Deep Learning Models</strong> - Neural networks that predict price movements<br>🔹 <strong>Natural Language Processing</strong> - Analyzing news sentiment in real-time<br>🔹 <strong>Reinforcement Learning</strong> - Continuously improving trading strategies<br>🔹 <strong>High-Frequency Data Analysis</strong> - Processing millions of data points per second</p>
                 <p>Our AI system has been backtested on 5+ years of market data, demonstrating consistent profitability across various market conditions.</p>
             </div>
         </div>
@@ -576,60 +527,38 @@
             <input type="email" id="loginEmail" placeholder="Email Address">
             <input type="password" id="loginPassword" placeholder="Password">
             <button onclick="handleLogin()">Sign In</button>
-            <div style="margin-top:15px; text-align:center;">
-                Don't have an account? <a href="register.html" style="color:#2dd4bf;">Create Account</a>
-            </div>
+            <div style="margin-top:15px; text-align:center;">Don't have an account? <a href="register.html" style="color:#2dd4bf;">Create Account</a></div>
         </div>
     </div>
 
     <script>
-        const API_URL = window.location.origin;
+        // HARDCODED RENDER BACKEND URL - This will work from ANY frontend host!
+        const API_URL = 'https://algon-flow-market.onrender.com';
 
         async function fetchBTCPrice() {
             try {
                 const response = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
                 const data = await response.json();
-                const price = parseFloat(data.lastPrice);
+                document.getElementById('btcPrice').innerHTML = `$${parseFloat(data.lastPrice).toLocaleString()}`;
                 const change = parseFloat(data.priceChangePercent);
-                const high = parseFloat(data.highPrice);
-                const low = parseFloat(data.lowPrice);
-                const volume = parseFloat(data.quoteVolume);
-                
-                document.getElementById('btcPrice').innerHTML = `$${price.toLocaleString()}`;
                 document.getElementById('btcChange').innerHTML = `${change >= 0 ? '▲' : '▼'} ${change.toFixed(2)}%`;
                 document.getElementById('btcChange').className = `price-change ${change >= 0 ? 'positive' : 'negative'}`;
-                document.getElementById('high24h').innerHTML = `$${high.toLocaleString()}`;
-                document.getElementById('low24h').innerHTML = `$${low.toLocaleString()}`;
-                document.getElementById('volume').innerHTML = `$${(volume / 1000000).toFixed(2)}M`;
-            } catch(e) {
-                document.getElementById('btcPrice').innerHTML = '$68,500';
-                document.getElementById('btcChange').innerHTML = '▲ +1.27%';
-                document.getElementById('btcChange').className = 'price-change positive';
-            }
+                document.getElementById('high24h').innerHTML = `$${parseFloat(data.highPrice).toLocaleString()}`;
+                document.getElementById('low24h').innerHTML = `$${parseFloat(data.lowPrice).toLocaleString()}`;
+                document.getElementById('volume').innerHTML = `$${(parseFloat(data.quoteVolume) / 1000000).toFixed(2)}M`;
+            } catch(e) { document.getElementById('btcPrice').innerHTML = '$68,500'; }
         }
-
         fetchBTCPrice();
         setInterval(fetchBTCPrice, 30000);
 
-        function openLoginModal() {
-            document.getElementById('loginModal').classList.add('active');
-        }
-
-        function closeModals() {
-            document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
-        }
+        function openLoginModal() { document.getElementById('loginModal').classList.add('active'); }
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); }
 
         async function handleLogin() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             const errorDiv = document.getElementById('loginError');
-
-            if (!email || !password) {
-                errorDiv.style.display = 'block';
-                errorDiv.textContent = 'Please enter email and password';
-                return;
-            }
-
+            if (!email || !password) { errorDiv.style.display = 'block'; errorDiv.textContent = 'Please enter email and password'; return; }
             try {
                 const response = await fetch(`${API_URL}/api/login`, {
                     method: 'POST',
@@ -637,7 +566,6 @@
                     body: JSON.stringify({ email, password })
                 });
                 const data = await response.json();
-
                 if (data.success) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
@@ -649,14 +577,10 @@
                 }
             } catch(error) {
                 errorDiv.style.display = 'block';
-                errorDiv.textContent = 'Connection error. Please try again.';
+                errorDiv.textContent = 'Connection error: ' + error.message;
                 setTimeout(() => errorDiv.style.display = 'none', 5000);
             }
         }
-
-        window.onclick = (e) => {
-            if (e.target.classList.contains('modal')) closeModals();
-        };
     </script>
 </body>
 </html>

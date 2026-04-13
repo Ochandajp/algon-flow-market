@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Algon Flow Market | AI Trading Dashboard</title>
+    <title>Dashboard | Algon Flow Market</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
@@ -47,7 +47,7 @@
         .logo {
             width: 35px;
             height: 35px;
-            background: linear-gradient(135deg, #00c6fb, #005bea);
+            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -184,14 +184,62 @@
             padding: 16px;
         }
 
-        .trade-input {
+        .api-key-section {
             background: #1a1f30;
-            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .api-key-input {
+            background: #0f1322;
+            border: 1px solid #2dd4bf;
             border-radius: 8px;
             padding: 10px;
             width: 100%;
             color: white;
+            font-size: 14px;
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+
+        .key-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .save-key-btn {
+            background: #2dd4bf;
+            border: none;
+            color: #0a0e17;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .delete-key-btn {
+            background: #ff6b6b;
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .trade-input {
+            background: #1a1f30;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 12px;
+            width: 100%;
+            color: white;
             margin: 8px 0;
+            font-size: 16px;
         }
 
         .controls-row {
@@ -235,57 +283,17 @@
             color: #0a0e17;
         }
 
-        .api-key-section {
-            background: #1a1f30;
-            border-radius: 8px;
-            padding: 12px;
-            margin-top: 12px;
-        }
-
-        .api-key-input {
-            background: #0f1322;
-            border: 1px solid #2dd4bf;
-            border-radius: 8px;
-            padding: 10px;
-            width: 100%;
-            color: white;
-            font-size: 14px;
-            text-align: center;
-            letter-spacing: 2px;
-        }
-
-        .key-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .verify-key-btn {
-            background: #2dd4bf;
+        .start-ai-btn {
+            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
             border: none;
             color: #0a0e17;
-            padding: 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            flex: 1;
-        }
-
-        .start-ai-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border: none;
-            color: white;
-            padding: 12px;
+            padding: 14px;
             border-radius: 8px;
             font-weight: 700;
             cursor: pointer;
             width: 100%;
             margin-top: 12px;
-        }
-
-        .start-ai-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+            font-size: 16px;
         }
 
         .right-column {
@@ -486,22 +494,7 @@
         .passkey-status {
             font-size: 11px;
             margin-top: 5px;
-            text-align: center;
-        }
-
-        .passkey-status.success {
             color: #2dd4bf;
-        }
-
-        .passkey-status.error {
-            color: #ff6b6b;
-        }
-
-        .min-note {
-            font-size: 11px;
-            color: #ffc107;
-            margin-top: 5px;
-            text-align: center;
         }
 
         @media (max-width: 768px) {
@@ -562,53 +555,45 @@
 
             <div class="trading-panel">
                 <div class="api-key-section">
-                    <label style="font-size: 12px; color: #8a92b0;">🔑 AI Passkey (12-digit code from Admin)</label>
-                    <input type="text" id="aiPasskey" class="api-key-input" placeholder="Enter your 12-digit AI Passkey" maxlength="12">
+                    <label style="font-size: 12px; color: #8a92b0;">🔑 AI Passkey (Get from Admin)</label>
+                    <input type="password" id="aiPasskey" class="api-key-input" placeholder="Enter your 12-digit AI Passkey">
                     <div class="key-buttons">
-                        <button class="verify-key-btn" id="verifyPasskeyBtn"><i class="fas fa-check-circle"></i> Verify & Activate AI</button>
+                        <button class="save-key-btn" id="savePasskeyBtn"><i class="fas fa-save"></i> Save</button>
+                        <button class="delete-key-btn" id="deletePasskeyBtn"><i class="fas fa-trash"></i> Delete</button>
                     </div>
                     <div id="passkeyStatus" class="passkey-status"></div>
                 </div>
 
-                <div id="aiTradingPanel" style="display: none;">
-                    <input type="number" id="aiAmount" class="trade-input" placeholder="Investment Amount (USD)" step="10">
-                    <div class="min-note"><i class="fas fa-info-circle"></i> Minimum AI trade: $115 USD</div>
-                    
-                    <div class="controls-row">
-                        <div class="control-group">
-                            <span class="control-label">📊 Leverage</span>
-                            <div class="leverage-buttons">
-                                <button class="leverage-btn" data-leverage="1">1x</button>
-                                <button class="leverage-btn" data-leverage="5">5x</button>
-                                <button class="leverage-btn" data-leverage="10">10x</button>
-                                <button class="leverage-btn active" data-leverage="100">100x</button>
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <span class="control-label">⏱️ Duration</span>
-                            <div class="duration-buttons">
-                                <button class="duration-btn" data-duration="1m" data-ms="60000">1m</button>
-                                <button class="duration-btn" data-duration="15m" data-ms="900000">15m</button>
-                                <button class="duration-btn active" data-duration="1h" data-ms="3600000">1h</button>
-                                <button class="duration-btn" data-duration="4h" data-ms="14400000">4h</button>
-                                <button class="duration-btn" data-duration="1d" data-ms="86400000">1d</button>
-                                <button class="duration-btn" data-duration="1w" data-ms="604800000">1w</button>
-                            </div>
+                <input type="number" id="aiAmount" class="trade-input" placeholder="Investment Amount (USD) - Minimum $115" step="10">
+                
+                <div class="controls-row">
+                    <div class="control-group">
+                        <span class="control-label">📊 Leverage</span>
+                        <div class="leverage-buttons">
+                            <button class="leverage-btn" data-leverage="1">1x</button>
+                            <button class="leverage-btn" data-leverage="5">5x</button>
+                            <button class="leverage-btn" data-leverage="10">10x</button>
+                            <button class="leverage-btn active" data-leverage="100">100x</button>
                         </div>
                     </div>
-
-                    <button class="start-ai-btn" id="startAIBtn"><i class="fas fa-robot"></i> Start AI Trading</button>
-                    
-                    <div id="aiAnalysis" class="ai-analysis">
-                        <h4><i class="fas fa-brain"></i> AI Market Analysis</h4>
-                        <div id="analysisContent"></div>
+                    <div class="control-group">
+                        <span class="control-label">⏱️ Duration</span>
+                        <div class="duration-buttons">
+                            <button class="duration-btn" data-duration="1m" data-ms="60000">1m</button>
+                            <button class="duration-btn" data-duration="15m" data-ms="900000">15m</button>
+                            <button class="duration-btn active" data-duration="1h" data-ms="3600000">1h</button>
+                            <button class="duration-btn" data-duration="4h" data-ms="14400000">4h</button>
+                            <button class="duration-btn" data-duration="1d" data-ms="86400000">1d</button>
+                            <button class="duration-btn" data-duration="1w" data-ms="604800000">1w</button>
+                        </div>
                     </div>
                 </div>
 
-                <div id="noPasskeyMessage" style="display: none; text-align: center; padding: 20px; color: #ffc107;">
-                    <i class="fas fa-key" style="font-size: 48px; margin-bottom: 10px; display: block;"></i>
-                    <p>Please enter and verify your AI Passkey to start trading.</p>
-                    <p style="font-size: 12px; margin-top: 10px;">Contact your administrator to get your 12-digit passkey.</p>
+                <button class="start-ai-btn" id="startAIBuyBtn"><i class="fas fa-robot"></i> Start AI Trading</button>
+                
+                <div id="aiAnalysis" class="ai-analysis">
+                    <h4><i class="fas fa-brain"></i> AI Market Analysis</h4>
+                    <div id="analysisContent"></div>
                 </div>
 
                 <div id="tradeMessage" style="margin-top: 10px; font-size: 12px; text-align: center; color: #8a92b0;"></div>
@@ -647,7 +632,8 @@
 </div>
 
 <script>
-    const API_URL = window.location.origin;
+    // HARDCODED RENDER BACKEND URL - This will work from ANY frontend host!
+    const API_URL = 'https://algon-flow-market.onrender.com';
 
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -665,8 +651,6 @@
     let activeTrades = [];
     let tradeHistory = [];
     let tvWidget = null;
-    let isPasskeyVerified = false;
-    let currentPasskey = '';
     
     const marketCategories = {
         crypto: [
@@ -697,78 +681,19 @@
             userData = data.user;
             document.getElementById('userBalance').innerHTML = userData.balance.toFixed(2);
             
+            if (userData.aiApiKey) {
+                document.getElementById('aiPasskey').value = userData.aiApiKey;
+                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-check-circle"></i> Passkey is set';
+            } else {
+                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-exclamation-circle"></i> No passkey set - Contact admin';
+            }
+            
             activeTrades = data.activeTrades || [];
             tradeHistory = data.tradeHistory || [];
             renderActiveTrades();
             renderTradeHistory();
-            
-            // Check if user has a passkey
-            await checkPasskeyStatus();
         } catch (error) {
             console.error('Error fetching profile:', error);
-        }
-    }
-    
-    async function checkPasskeyStatus() {
-        try {
-            const response = await fetch(`${API_URL}/api/ai/check-passkey`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
-            if (data.hasPasskey && data.passkey) {
-                currentPasskey = data.passkey;
-                document.getElementById('aiPasskey').value = data.passkey;
-                isPasskeyVerified = true;
-                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-check-circle"></i> AI Passkey active! You can start trading.';
-                document.getElementById('passkeyStatus').className = 'passkey-status success';
-                document.getElementById('aiTradingPanel').style.display = 'block';
-                document.getElementById('noPasskeyMessage').style.display = 'none';
-            } else {
-                isPasskeyVerified = false;
-                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-exclamation-circle"></i> No AI Passkey found. Contact admin.';
-                document.getElementById('passkeyStatus').className = 'passkey-status error';
-                document.getElementById('aiTradingPanel').style.display = 'none';
-                document.getElementById('noPasskeyMessage').style.display = 'block';
-            }
-        } catch (error) {
-            console.error('Error checking passkey:', error);
-        }
-    }
-    
-    async function verifyPasskey() {
-        const passkey = document.getElementById('aiPasskey').value.trim().toUpperCase();
-        if (!passkey) {
-            showMessage('Please enter your AI Passkey', 'error');
-            return;
-        }
-        
-        if (passkey.length !== 12) {
-            showMessage('Passkey must be exactly 12 characters', 'error');
-            return;
-        }
-        
-        try {
-            const response = await fetch(`${API_URL}/api/ai/save-passkey`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ passkey })
-            });
-            const data = await response.json();
-            if (data.success) {
-                isPasskeyVerified = true;
-                currentPasskey = passkey;
-                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-check-circle"></i> Passkey verified! AI trading activated.';
-                document.getElementById('passkeyStatus').className = 'passkey-status success';
-                document.getElementById('aiTradingPanel').style.display = 'block';
-                document.getElementById('noPasskeyMessage').style.display = 'none';
-                showMessage('✅ AI Passkey verified! You can now start trading.', 'success');
-            } else {
-                showMessage(data.error || 'Invalid passkey', 'error');
-                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-times-circle"></i> Invalid passkey';
-                document.getElementById('passkeyStatus').className = 'passkey-status error';
-            }
-        } catch (error) {
-            showMessage('Error verifying passkey', 'error');
         }
     }
     
@@ -878,21 +803,70 @@
         }
     }
     
-    async function startAITrade() {
-        if (!isPasskeyVerified) {
-            showMessage('⚠️ Please verify your AI Passkey first', 'error');
+    async function savePasskey() {
+        const passkey = document.getElementById('aiPasskey').value;
+        if (!passkey) {
+            showMessage('Please enter your AI Passkey', 'error');
             return;
         }
         
+        try {
+            const response = await fetch(`${API_URL}/api/ai/save-passkey`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ passkey })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showMessage('✅ Passkey saved successfully!', 'success');
+                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-check-circle"></i> Passkey is set';
+                fetchUserProfile();
+            } else {
+                showMessage(data.error, 'error');
+            }
+        } catch (error) {
+            showMessage('Error saving passkey', 'error');
+        }
+    }
+    
+    async function deletePasskey() {
+        if (!confirm('Are you sure you want to delete your AI Passkey? You will not be able to start AI trades without it.')) return;
+        
+        try {
+            const response = await fetch(`${API_URL}/api/ai/delete-passkey`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.success) {
+                showMessage('✅ Passkey deleted successfully!', 'success');
+                document.getElementById('aiPasskey').value = '';
+                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-exclamation-circle"></i> No passkey set';
+                fetchUserProfile();
+            } else {
+                showMessage(data.error, 'error');
+            }
+        } catch (error) {
+            showMessage('Error deleting passkey', 'error');
+        }
+    }
+    
+    async function startAITrade() {
         const amount = parseFloat(document.getElementById('aiAmount').value);
+        const passkey = document.getElementById('aiPasskey').value;
         
         if (!amount || amount < 115) {
-            showMessage('⚠️ Minimum AI investment is $115 USD', 'error');
+            showMessage('⚠️ Minimum AI trade amount is $115 USD', 'error');
             return;
         }
         
         if (amount > userData?.balance) {
-            showMessage('❌ Insufficient balance. Please deposit funds.', 'error');
+            showMessage('❌ Insufficient balance', 'error');
+            return;
+        }
+        
+        if (!passkey) {
+            showMessage('⚠️ Please save your AI Passkey first', 'error');
             return;
         }
         
@@ -913,7 +887,7 @@
                     leverage: currentLeverage,
                     duration: currentDuration,
                     durationMs: currentDurationMs,
-                    passkey: currentPasskey
+                    passkey: passkey
                 })
             });
             const data = await response.json();
@@ -1051,8 +1025,9 @@
         };
     });
     
-    document.getElementById("verifyPasskeyBtn").onclick = verifyPasskey;
-    document.getElementById("startAIBtn").onclick = startAITrade;
+    document.getElementById("savePasskeyBtn").onclick = savePasskey;
+    document.getElementById("deletePasskeyBtn").onclick = deletePasskey;
+    document.getElementById("startAIBuyBtn").onclick = startAITrade;
     document.getElementById("depositBtn").onclick = () => window.location.href = 'deposit.html';
     document.getElementById("withdrawBtn").onclick = () => window.location.href = 'withdraw.html';
     
