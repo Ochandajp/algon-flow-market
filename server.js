@@ -310,46 +310,46 @@ function analyzeMarket(symbol, currentPrice, change24h, volume, volatility) {
     return analysis;
 }
 
-// ============= UPDATE ACTIVE TRADES - ONLY WHEN TIME ELAPSES =============
+// ============= UPDATE ACTIVE TRADES - ONLY WHEN TIME EXPIRES =============
 async function updateActiveTrades() {
     const activeTrades = await Trade.find({ status: 'active' });
+    const now = Date.now();
     
     for (const trade of activeTrades) {
-        const elapsed = Date.now() - new Date(trade.startedAt).getTime();
+        const startedAt = new Date(trade.startedAt).getTime();
+        const elapsed = now - startedAt;
         
-        // Calculate simulated current price for display purposes only
+        // Calculate simulated price for display (just for visual, not for completion)
+        let progress = Math.min(1, elapsed / trade.durationMs);
         let simulatedPrice = trade.entryPrice;
-        const progress = Math.min(1, elapsed / trade.durationMs);
         
+        // Simple price simulation for display - small movement
         if (trade.side === 'buy') {
-            const volatility = 0.002;
-            const trend = 0.0005;
-            simulatedPrice = trade.entryPrice * (1 + (progress * trend) + (Math.random() - 0.5) * volatility);
+            // Small upward trend for buys
+            const movement = (Math.random() - 0.48) * 0.001; // Very small random movement
+            simulatedPrice = trade.entryPrice * (1 + (progress * 0.0005) + movement);
         } else {
-            const volatility = 0.002;
-            const trend = -0.0005;
-            simulatedPrice = trade.entryPrice * (1 + (progress * trend) + (Math.random() - 0.5) * volatility);
+            // Small downward trend for sells
+            const movement = (Math.random() - 0.52) * 0.001;
+            simulatedPrice = trade.entryPrice * (1 - (progress * 0.0005) + movement);
         }
         
         trade.exitPrice = simulatedPrice;
         
-        // ONLY COMPLETE TRADE WHEN TIME HAS ELAPSED - NOT BEFORE!
+        // CRITICAL: ONLY complete trade when time has fully elapsed
         if (elapsed >= trade.durationMs) {
-            // Calculate profit based on simulated price at completion
+            console.log(`Trade completed after ${elapsed}ms (duration: ${trade.durationMs}ms)`);
+            
+            // Determine if trade was winning or losing
+            // For demo purposes, 70% win rate, 30% loss rate
+            const isWin = Math.random() < 0.7; // 70% chance to win
+            
             let profit = 0;
-            if (trade.side === 'buy') {
-                profit = (simulatedPrice - trade.entryPrice) / trade.entryPrice * trade.amount * trade.leverage;
-            } else {
-                profit = (trade.entryPrice - simulatedPrice) / trade.entryPrice * trade.amount * trade.leverage;
-            }
-            
-            // Apply 88% profit cap for winning trades
-            if (profit > 0) {
+            if (isWin) {
+                // Winning trade: 88% profit
                 profit = trade.amount * 0.88;
-            }
-            
-            // Apply stop loss at $10
-            if (profit < -10) {
+            } else {
+                // Losing trade: max $10 loss
                 profit = -10;
             }
             
@@ -382,7 +382,7 @@ async function updateActiveTrades() {
                     type: 'profit',
                     amount: Math.abs(profit),
                     transactionId: 'TRADE_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-                    description: `${trade.side.toUpperCase()} trade on ${trade.symbolName} completed. ${profit >= 0 ? 'Profit' : 'Loss'}: $${Math.abs(profit).toFixed(2)} (88% profit cap applied)`
+                    description: `${trade.side.toUpperCase()} trade on ${trade.symbolName} completed after ${trade.duration}. ${profit >= 0 ? `WIN! +${(profit/trade.amount*100).toFixed(0)}% profit (88% cap)` : `LOSS: -$${Math.abs(profit).toFixed(2)} (max loss $10)`}`
                 });
                 await transaction.save();
             }
@@ -443,6 +443,19 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
         user.balance = user.balance - amount;
         await user.save();
         
+        // Get duration display text
+        let durationText = duration;
+        switch(duration) {
+            case '3m': durationText = '3 minutes'; break;
+            case '5m': durationText = '5 minutes'; break;
+            case '15m': durationText = '15 minutes'; break;
+            case '30m': durationText = '30 minutes'; break;
+            case '1h': durationText = '1 hour'; break;
+            case '4h': durationText = '4 hours'; break;
+            case '1d': durationText = '1 day'; break;
+            case '1w': durationText = '1 week'; break;
+        }
+        
         const trade = new Trade({
             userId: user._id,
             symbol,
@@ -451,7 +464,7 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
             side,
             amount,
             leverage,
-            duration,
+            duration: durationText,
             durationMs,
             entryPrice: currentPrice,
             analysis: analysis.reasons.join(' | '),
@@ -514,31 +527,15 @@ app.post('/api/ai/stop-trade/:tradeId', authenticateToken, async (req, res) => {
         trade.status = 'stopped';
         trade.endedAt = new Date();
         
-        // Calculate profit/loss at stop time
-        let profit = trade.profit || 0;
-        
-        // Apply 88% cap if profit positive
-        if (profit > 0) {
-            profit = Math.min(profit, trade.amount * 0.88);
-        }
-        
-        // Apply stop loss at $10
-        if (profit < -10) {
-            profit = -10;
-        }
-        
+        // When stopped early, user loses the entire amount (or small penalty)
+        const profit = -10; // Max loss $10 when stopping early
         trade.profit = profit;
         
         const user = await User.findById(req.user.id);
         if (user) {
             const amountToReturn = trade.amount + profit;
             user.balance = user.balance + amountToReturn;
-            
-            if (profit > 0) {
-                user.totalProfit = (user.totalProfit || 0) + profit;
-            } else {
-                user.totalLoss = (user.totalLoss || 0) + Math.abs(profit);
-            }
+            user.totalLoss = (user.totalLoss || 0) + Math.abs(profit);
             await user.save();
         }
         
