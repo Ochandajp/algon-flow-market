@@ -181,57 +181,28 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-// ============= LOGIN ROUTE - FIXED =============
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         
-        console.log('Login attempt for email:', email);
-        
-        // Find user by email
         const user = await User.findOne({ email });
-        if (!user) {
-            console.log('User not found:', email);
-            return res.status(400).json({ error: 'Invalid email or password' });
-        }
+        if (!user) return res.status(400).json({ error: 'Invalid email or password' });
         
-        console.log('User found:', user.email, 'IsAdmin:', user.isAdmin);
-        
-        // Compare password
         const validPassword = await bcrypt.compare(password, user.password);
-        if (!validPassword) {
-            console.log('Invalid password for:', email);
-            return res.status(400).json({ error: 'Invalid email or password' });
-        }
+        if (!validPassword) return res.status(400).json({ error: 'Invalid email or password' });
         
-        console.log('Password valid for:', email);
-        
-        // Update last login
         user.lastLogin = new Date();
         await user.save();
         
-        // Create token
-        const token = jwt.sign(
-            { id: user._id, email: user.email, isAdmin: user.isAdmin }, 
-            process.env.JWT_SECRET || 'algonflow_jwt_secret'
-        );
-        
-        console.log('Login successful for:', email, 'IsAdmin:', user.isAdmin);
+        const token = jwt.sign({ id: user._id, email: user.email, isAdmin: user.isAdmin }, process.env.JWT_SECRET || 'algonflow_jwt_secret');
         
         res.json({ 
             success: true, 
             token, 
-            user: { 
-                id: user._id, 
-                email: user.email, 
-                fullName: user.fullName, 
-                balance: user.balance, 
-                isAdmin: user.isAdmin 
-            }
+            user: { id: user._id, email: user.email, fullName: user.fullName, balance: user.balance, isAdmin: user.isAdmin }
         });
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Login failed. Please try again.' });
+        res.status(500).json({ error: 'Login failed' });
     }
 });
 
@@ -339,14 +310,17 @@ function analyzeMarket(symbol, currentPrice, change24h, volume, volatility) {
     return analysis;
 }
 
+// ============= UPDATE ACTIVE TRADES - ONLY WHEN TIME ELAPSES =============
 async function updateActiveTrades() {
     const activeTrades = await Trade.find({ status: 'active' });
     
     for (const trade of activeTrades) {
         const elapsed = Date.now() - new Date(trade.startedAt).getTime();
+        
+        // Calculate simulated current price for display purposes only
+        let simulatedPrice = trade.entryPrice;
         const progress = Math.min(1, elapsed / trade.durationMs);
         
-        let simulatedPrice = trade.entryPrice;
         if (trade.side === 'buy') {
             const volatility = 0.002;
             const trend = 0.0005;
@@ -359,29 +333,33 @@ async function updateActiveTrades() {
         
         trade.exitPrice = simulatedPrice;
         
-        let profit = 0;
-        if (trade.side === 'buy') {
-            profit = (simulatedPrice - trade.entryPrice) / trade.entryPrice * trade.amount * trade.leverage;
-        } else {
-            profit = (trade.entryPrice - simulatedPrice) / trade.entryPrice * trade.amount * trade.leverage;
-        }
-        
-        if (profit > 0) {
-            profit = trade.amount * 0.88;
-        }
-        
-        if (profit < -10) {
-            profit = -10;
-        }
-        
-        trade.profit = profit;
-        
-        if (elapsed >= trade.durationMs || profit >= trade.amount * 0.88 || profit <= -10) {
+        // ONLY COMPLETE TRADE WHEN TIME HAS ELAPSED - NOT BEFORE!
+        if (elapsed >= trade.durationMs) {
+            // Calculate profit based on simulated price at completion
+            let profit = 0;
+            if (trade.side === 'buy') {
+                profit = (simulatedPrice - trade.entryPrice) / trade.entryPrice * trade.amount * trade.leverage;
+            } else {
+                profit = (trade.entryPrice - simulatedPrice) / trade.entryPrice * trade.amount * trade.leverage;
+            }
+            
+            // Apply 88% profit cap for winning trades
+            if (profit > 0) {
+                profit = trade.amount * 0.88;
+            }
+            
+            // Apply stop loss at $10
+            if (profit < -10) {
+                profit = -10;
+            }
+            
+            trade.profit = profit;
             trade.status = 'completed';
             trade.endedAt = new Date();
             
             const user = await User.findById(trade.userId);
             if (user) {
+                // Return original stake + profit/loss
                 const amountToReturn = trade.amount + profit;
                 user.balance = user.balance + amountToReturn;
                 
@@ -404,7 +382,7 @@ async function updateActiveTrades() {
                     type: 'profit',
                     amount: Math.abs(profit),
                     transactionId: 'TRADE_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-                    description: `${trade.side.toUpperCase()} trade on ${trade.symbolName} completed. ${profit >= 0 ? 'Profit' : 'Loss'}: $${Math.abs(profit).toFixed(2)}`
+                    description: `${trade.side.toUpperCase()} trade on ${trade.symbolName} completed. ${profit >= 0 ? 'Profit' : 'Loss'}: $${Math.abs(profit).toFixed(2)} (88% profit cap applied)`
                 });
                 await transaction.save();
             }
@@ -414,8 +392,10 @@ async function updateActiveTrades() {
     }
 }
 
+// Run every 5 seconds to check for completed trades
 setInterval(updateActiveTrades, 5000);
 
+// ============= AI START TRADE =============
 app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
     try {
         const { symbol, symbolName, category, amount, leverage, duration, durationMs, passkey } = req.body;
@@ -459,6 +439,7 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
         const analysis = analyzeMarket(symbol, currentPrice, change24h, volume, volatility);
         const side = analysis.decision;
         
+        // Deduct investment amount from balance immediately
         user.balance = user.balance - amount;
         await user.save();
         
@@ -489,7 +470,8 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
                 reasons: analysis.reasons,
                 signals: analysis.signals,
                 entryPrice: currentPrice,
-                expectedProfit: amount * 0.88
+                expectedProfit: amount * 0.88,
+                expectedReturn: '88%'
             }
         });
         
@@ -532,12 +514,20 @@ app.post('/api/ai/stop-trade/:tradeId', authenticateToken, async (req, res) => {
         trade.status = 'stopped';
         trade.endedAt = new Date();
         
+        // Calculate profit/loss at stop time
         let profit = trade.profit || 0;
         
+        // Apply 88% cap if profit positive
+        if (profit > 0) {
+            profit = Math.min(profit, trade.amount * 0.88);
+        }
+        
+        // Apply stop loss at $10
         if (profit < -10) {
             profit = -10;
-            trade.profit = profit;
         }
+        
+        trade.profit = profit;
         
         const user = await User.findById(req.user.id);
         if (user) {
@@ -560,6 +550,7 @@ app.post('/api/ai/stop-trade/:tradeId', authenticateToken, async (req, res) => {
     }
 });
 
+// ============= DEPOSIT ROUTES =============
 app.post('/api/deposit/create', authenticateToken, async (req, res) => {
     try {
         const { amount } = req.body;
@@ -604,6 +595,7 @@ app.get('/api/deposit/check/:paymentId', authenticateToken, async (req, res) => 
     }
 });
 
+// ============= WITHDRAWAL ROUTES =============
 app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
     try {
         const { amount, network, address } = req.body;
@@ -873,4 +865,5 @@ app.listen(PORT, async () => {
     console.log(`✅ CORS enabled for all origins`);
     console.log(`📱 Backend API available at: https://algon-flow-market.onrender.com`);
     console.log(`💰 AI Profit set to 88% of stake`);
+    console.log(`⏱️ Trades ONLY complete when duration time has fully elapsed`);
 });
