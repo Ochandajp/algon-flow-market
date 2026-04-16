@@ -269,18 +269,33 @@ app.get('/api/chat/messages', authenticateToken, async (req, res) => {
     }
 });
 
-// Admin gets all chats
+// Admin gets all chats - FIXED SYNTAX ERROR HERE
 app.get('/api/admin/chats', authenticateToken, isAdmin, async (req, res) => {
     try {
         const chats = await ChatMessage.aggregate([
             { $sort: { createdAt: -1 } },
-            { $group: { _id: '$userId', lastMessage: { $first: '$$ROOT' }, unreadCount: { $sum: { $cond: [{ $and: [{ $eq: ['$adminReply', ''] }, { $eq: ['$readByAdmin', false }] }, 1, 0] } } } },
+            { 
+                $group: { 
+                    _id: '$userId', 
+                    lastMessage: { $first: '$$ROOT' }, 
+                    unreadCount: { 
+                        $sum: { 
+                            $cond: [
+                                { $and: [ { $eq: ['$adminReply', ''] }, { $eq: ['$readByAdmin', false] } ] }, 
+                                1, 
+                                0
+                            ] 
+                        } 
+                    } 
+                } 
+            },
             { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
             { $unwind: '$user' }
         ]);
         
         res.json({ success: true, chats });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Failed to fetch chats' });
     }
 });
