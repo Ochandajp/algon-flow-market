@@ -5,165 +5,436 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Deposit Funds | Algon Flow</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        body { background: #0a0e17; color: #e0e3eb; min-height: 100vh; }
-        .container { max-width: 500px; margin: 0 auto; padding: 80px 20px 40px; }
-        .deposit-card { background: #0f1322; border-radius: 24px; border: 1px solid rgba(45,212,191,0.3); padding: 30px; }
-        .deposit-card h1 { font-size: 28px; margin-bottom: 10px; text-align: center; }
-        .subtitle { text-align: center; color: #8a92b0; margin-bottom: 30px; }
-        .amount-input { margin: 20px 0; }
-        .amount-input label { display: block; margin-bottom: 10px; font-weight: 600; }
-        .amount-input input { width: 100%; padding: 15px; background: #1a1f30; border: 1px solid #2d3748; border-radius: 12px; color: white; font-size: 24px; text-align: center; }
-        .preset-amounts { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
-        .preset-btn { background: #1a1f30; border: 1px solid #2d3748; padding: 8px 16px; border-radius: 30px; color: white; cursor: pointer; transition: 0.2s; }
-        .preset-btn:hover { border-color: #2dd4bf; color: #2dd4bf; }
-        .min-note { font-size: 12px; color: #ffc107; margin-top: 5px; }
-        .deposit-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #2dd4bf, #00c6fb); border: none; border-radius: 12px; color: #0a0e17; font-weight: 700; font-size: 18px; cursor: pointer; margin-top: 20px; }
-        .payment-info { margin-top: 25px; padding: 15px; background: rgba(45,212,191,0.1); border-radius: 12px; display: none; }
-        .payment-info.active { display: block; }
-        .status-check { margin-top: 20px; text-align: center; }
-        .check-status-btn { background: #2d3748; border: none; padding: 10px 20px; border-radius: 30px; color: white; cursor: pointer; }
-        .back-link { display: block; text-align: center; margin-top: 20px; color: #2dd4bf; text-decoration: none; }
-        .address-box { background: #1a1f30; padding: 12px; border-radius: 10px; word-break: break-all; font-family: monospace; font-size: 12px; margin: 10px 0; }
-        .copy-btn { background: #2dd4bf; color: #0a0e17; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #0a0e17;
+            color: #e0e3eb;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 550px;
+            margin: 0 auto;
+            padding: 80px 16px 40px;
+        }
+
+        .deposit-card {
+            background: #0f1322;
+            border-radius: 24px;
+            border: 1px solid rgba(45,212,191,0.3);
+            padding: 28px;
+        }
+
+        .deposit-card h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            text-align: center;
+            color: #2dd4bf;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #8a92b0;
+            margin-bottom: 25px;
+            font-size: 13px;
+        }
+
+        /* Network Tabs */
+        .network-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(45,212,191,0.2);
+            padding-bottom: 15px;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            background: #1a1f30;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
+            color: #8a92b0;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .tab-btn i {
+            margin-right: 8px;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #2dd4bf, #00c6fb);
+            color: #0a0e17;
+        }
+
+        .tab-btn:hover {
+            background: rgba(45,212,191,0.2);
+            color: #2dd4bf;
+        }
+
+        /* Wallet Panel */
+        .wallet-panel {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .wallet-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .network-badge {
+            display: inline-block;
+            background: rgba(45,212,191,0.15);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #2dd4bf;
+            margin-bottom: 20px;
+        }
+
+        .address-container {
+            background: #1a1f30;
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(45,212,191,0.2);
+        }
+
+        .address-label {
+            font-size: 11px;
+            color: #8a92b0;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .address-value {
+            font-family: monospace;
+            font-size: 14px;
+            color: #2dd4bf;
+            background: #0f1322;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            word-break: break-all;
+            letter-spacing: 0.5px;
+        }
+
+        .copy-btn {
+            background: #2d3748;
+            border: 1px solid rgba(45,212,191,0.3);
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #2dd4bf;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            width: 100%;
+            transition: 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: rgba(45,212,191,0.15);
+            border-color: #2dd4bf;
+        }
+
+        .copy-btn.copied {
+            background: #2dd4bf;
+            color: #0a0e17;
+            border-color: #2dd4bf;
+        }
+
+        .qr-placeholder {
+            background: #1a1f30;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(45,212,191,0.2);
+        }
+
+        .qr-container {
+            background: white;
+            padding: 15px;
+            border-radius: 16px;
+            display: inline-block;
+        }
+
+        .min-amount {
+            font-size: 12px;
+            color: #2dd4bf;
+            text-align: center;
+            margin: 15px 0;
+            background: rgba(45,212,191,0.1);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .warning-box {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid #ffc107;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .warning-box p {
+            color: #ffc107;
+            font-size: 12px;
+            margin: 5px 0;
+        }
+
+        .info-box {
+            background: rgba(45,212,191,0.05);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 12px;
+            color: #8a92b0;
+            border: 1px solid rgba(45,212,191,0.15);
+        }
+
+        .info-box i {
+            margin-right: 8px;
+            color: #2dd4bf;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #2dd4bf;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        hr {
+            border-color: rgba(45,212,191,0.15);
+            margin: 20px 0;
+        }
+
+        @media (max-width: 480px) {
+            .tab-btn {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+            .address-value {
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="deposit-card">
         <h1><i class="fas fa-plus-circle"></i> Deposit Funds</h1>
-        <p class="subtitle">Minimum deposit: $60 USD</p>
-        
-        <div class="amount-input">
-            <label>Amount (USD)</label>
-            <input type="number" id="amount" placeholder="Enter amount" min="60" step="10">
-            <div class="preset-amounts">
-                <button class="preset-btn" data-amount="60">$60</button>
-                <button class="preset-btn" data-amount="115">$115</button>
-                <button class="preset-btn" data-amount="250">$250</button>
-                <button class="preset-btn" data-amount="500">$500</button>
-                <button class="preset-btn" data-amount="1000">$1,000</button>
-                <button class="preset-btn" data-amount="5000">$5,000</button>
-            </div>
-            <div class="min-note"><i class="fas fa-info-circle"></i> Minimum deposit: $60 USD</div>
+        <p class="subtitle">Add funds to your account to start trading</p>
+
+        <!-- Network Tabs -->
+        <div class="network-tabs">
+            <button class="tab-btn active" data-network="usdt-trc20">
+                <i class="fas fa-coins"></i> USDT (TRC20)
+            </button>
+            <button class="tab-btn" data-network="bitcoin">
+                <i class="fab fa-bitcoin"></i> Bitcoin (BTC)
+            </button>
         </div>
-        
-        <button class="deposit-btn" id="depositNowBtn"><i class="fas fa-credit-card"></i> Generate Payment</button>
-        
-        <div class="payment-info" id="paymentInfo">
-            <h4 style="margin-bottom: 15px;"><i class="fas fa-qrcode"></i> Complete Payment</h4>
-            <div id="paymentFrame"></div>
-            <div class="status-check">
-                <button class="check-status-btn" id="checkStatusBtn"><i class="fas fa-sync-alt"></i> Check Payment Status</button>
+
+        <!-- USDT TRC20 Panel -->
+        <div id="panel-usdt-trc20" class="wallet-panel active">
+            <div class="network-badge">
+                <i class="fas fa-network-wired"></i> Network: TRON (TRC20)
+            </div>
+            <div class="address-container">
+                <div class="address-label">📌 USDT Wallet Address</div>
+                <div class="address-value" id="usdt-address">TNM2SREr7uAVbumYbzwXvFCa3TejcXAtGV</div>
+                <button class="copy-btn" onclick="copyAddress('usdt-address')">
+                    <i class="fas fa-copy"></i> Copy Address
+                </button>
+            </div>
+            <div class="qr-placeholder">
+                <div id="qrcode-usdt" class="qr-container"></div>
+            </div>
+            <div class="min-amount">
+                <i class="fas fa-info-circle"></i> Minimum Deposit: $50 USD equivalent in USDT
+            </div>
+            <div class="warning-box">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p><strong>⚠️ IMPORTANT:</strong> Send ONLY <strong>USDT (TRC20)</strong> on the TRON network to this address.</p>
+                <p>Sending any other cryptocurrency or using wrong network (ERC20, BEP20) may result in permanent loss of funds.</p>
+                <p>Make sure to select <strong>TRC20 network</strong> when withdrawing from your exchange or wallet.</p>
             </div>
         </div>
-        
+
+        <!-- Bitcoin Panel -->
+        <div id="panel-bitcoin" class="wallet-panel">
+            <div class="network-badge">
+                <i class="fas fa-network-wired"></i> Network: Bitcoin (BTC)
+            </div>
+            <div class="address-container">
+                <div class="address-label">📌 Bitcoin Wallet Address</div>
+                <div class="address-value" id="btc-address">1PQAwm2hs4jnjigaMG45RbLbg2UfSPqnqS</div>
+                <button class="copy-btn" onclick="copyAddress('btc-address')">
+                    <i class="fas fa-copy"></i> Copy Address
+                </button>
+            </div>
+            <div class="qr-placeholder">
+                <div id="qrcode-btc" class="qr-container"></div>
+            </div>
+            <div class="min-amount">
+                <i class="fas fa-info-circle"></i> Minimum Deposit: $50 USD equivalent in Bitcoin
+            </div>
+            <div class="warning-box">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p><strong>⚠️ IMPORTANT:</strong> Send ONLY <strong>Bitcoin (BTC)</strong> to this address.</p>
+                <p>Do NOT send Bitcoin Cash (BCH), Bitcoin SV (BSV), or any other cryptocurrency to this address.</p>
+                <p>Transactions typically require 1-3 confirmations before being credited.</p>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="info-box">
+            <i class="fas fa-clock"></i> <strong>After Payment:</strong> Send the transaction hash to support or wait for admin verification. Funds will be credited within 15-30 minutes after confirmation.
+        </div>
+
+        <div class="info-box">
+            <i class="fas fa-shield-alt"></i> <strong>Secure & Safe:</strong> All deposits are monitored and verified by our admin team. Your funds are secure.
+        </div>
+
+        <div class="info-box">
+            <i class="fas fa-question-circle"></i> <strong>Need Help?</strong> Contact our support team with your transaction ID and registered email address.
+        </div>
+
         <a href="dashboard.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
     </div>
 </div>
 
 <script>
-    const API_URL = 'https://algon-flow-market.onrender.com';
-    
+    // Check if user is logged in
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
-    if (!token) window.location.href = 'index.html';
+    if (!token) {
+        window.location.href = 'index.html';
+    }
     
-    let currentPaymentId = null;
-    let statusInterval = null;
-    
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-        btn.onclick = () => {
-            document.getElementById('amount').value = btn.dataset.amount;
-        };
-    });
-    
-    document.getElementById('depositNowBtn').onclick = async () => {
-        const amount = parseFloat(document.getElementById('amount').value);
-        
-        if (!amount || amount < 60) {
-            alert('⚠️ Minimum deposit amount is $60 USD');
-            return;
-        }
-        
-        const depositBtn = document.getElementById('depositNowBtn');
-        depositBtn.disabled = true;
-        depositBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Generating...';
-        
-        try {
-            const response = await fetch(`${API_URL}/api/deposit/create`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ amount: amount })
-            });
-            const data = await response.json();
-            
-            if (data.success) {
-                currentPaymentId = data.paymentId;
-                
-                const demoAddress = 'T' + Math.random().toString(36).substring(2, 15).toUpperCase() + Math.random().toString(36).substring(2, 10).toUpperCase();
-                
-                const paymentDiv = document.getElementById('paymentFrame');
-                paymentDiv.innerHTML = `
-                    <div style="text-align: center;">
-                        <p style="margin-bottom: 15px;">Send exactly <strong style="color: #2dd4bf; font-size: 20px;">$${amount} USDT</strong> to the address below:</p>
-                        <div class="address-box">
-                            <strong>USDT (TRC20) Address:</strong><br>
-                            ${demoAddress}
-                        </div>
-                        <button class="copy-btn" onclick="navigator.clipboard.writeText('${demoAddress}')">
-                            <i class="fas fa-copy"></i> Copy Address
-                        </button>
-                        <p style="margin-top: 15px; font-size: 12px; color: #8a92b0;">
-                            ⚠️ Send only USDT on TRC20 network.<br>
-                            Payment will be confirmed automatically after 1 network confirmation.
-                        </p>
-                    </div>
-                `;
-                
-                document.getElementById('paymentInfo').classList.add('active');
-                startStatusCheck();
-            } else {
-                alert(data.error || 'Failed to create deposit');
-            }
-        } catch (error) {
-            alert('Error creating deposit. Please try again.');
-        } finally {
-            depositBtn.disabled = false;
-            depositBtn.innerHTML = '<i class="fas fa-credit-card"></i> Generate Payment';
+    // Wallet addresses
+    const wallets = {
+        usdt: {
+            address: 'TNM2SREr7uAVbumYbzwXvFCa3TejcXAtGV',
+            name: 'USDT TRC20'
+        },
+        btc: {
+            address: '1PQAwm2hs4jnjigaMG45RbLbg2UfSPqnqS',
+            name: 'Bitcoin'
         }
     };
-    
-    function startStatusCheck() {
-        if (statusInterval) clearInterval(statusInterval);
-        statusInterval = setInterval(checkPaymentStatus, 10000);
-    }
-    
-    async function checkPaymentStatus() {
-        if (!currentPaymentId) return;
-        
-        try {
-            const response = await fetch(`${API_URL}/api/deposit/check/${currentPaymentId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+
+    // Generate QR codes when page loads
+    function generateQRCodes() {
+        // USDT QR Code
+        const usdtContainer = document.getElementById('qrcode-usdt');
+        if (usdtContainer) {
+            usdtContainer.innerHTML = '';
+            new QRCode(usdtContainer, {
+                text: wallets.usdt.address,
+                width: 180,
+                height: 180,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
             });
-            const data = await response.json();
-            
-            if (data.status === 'completed') {
-                clearInterval(statusInterval);
-                alert('✅ Payment confirmed! Your balance has been updated. Redirecting to dashboard...');
-                window.location.href = 'dashboard.html';
-            } else if (data.status === 'failed') {
-                clearInterval(statusInterval);
-                alert('❌ Payment failed. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error checking status:', error);
+        }
+
+        // Bitcoin QR Code
+        const btcContainer = document.getElementById('qrcode-btc');
+        if (btcContainer) {
+            btcContainer.innerHTML = '';
+            new QRCode(btcContainer, {
+                text: wallets.btc.address,
+                width: 180,
+                height: 180,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
         }
     }
-    
-    document.getElementById('checkStatusBtn').onclick = checkPaymentStatus;
+
+    // Copy address function
+    window.copyAddress = function(elementId) {
+        const addressElement = document.getElementById(elementId);
+        const address = addressElement.innerText;
+        
+        navigator.clipboard.writeText(address).then(() => {
+            // Find the copy button
+            const container = addressElement.closest('.address-container');
+            const copyBtn = container.querySelector('.copy-btn');
+            const originalText = copyBtn.innerHTML;
+            
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            copyBtn.classList.add('copied');
+            
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+                copyBtn.classList.remove('copied');
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            alert('Failed to copy address. Please select and copy manually.');
+        });
+    };
+
+    // Tab switching functionality
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Remove active class from all tabs and panels
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.wallet-panel').forEach(panel => panel.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            btn.classList.add('active');
+            
+            // Show corresponding panel
+            const network = btn.getAttribute('data-network');
+            const panel = document.getElementById(`panel-${network}`);
+            if (panel) {
+                panel.classList.add('active');
+            }
+        });
+    });
+
+    // Generate QR codes when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        generateQRCodes();
+        
+        // Log user email for reference
+        console.log('Registered email for this account:', user.email);
+        console.log('Deposit addresses loaded:');
+        console.log('USDT TRC20:', wallets.usdt.address);
+        console.log('Bitcoin:', wallets.btc.address);
+    });
 </script>
 </body>
 </html>

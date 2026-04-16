@@ -103,10 +103,25 @@ const withdrawalSchema = new mongoose.Schema({
     processedBy: { type: String }
 });
 
+// ============= CHAT SCHEMA (Auto-delete after 2 days) =============
+const chatMessageSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    userEmail: { type: String, required: true },
+    userName: { type: String, required: true },
+    message: { type: String, required: true },
+    sender: { type: String, enum: ['user', 'admin'], default: 'user' },
+    adminReply: { type: String, default: '' },
+    repliedAt: { type: Date },
+    repliedBy: { type: String },
+    readByAdmin: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now, expires: 172800 } // Auto-delete after 2 days
+});
+
 const User = mongoose.model('User', userSchema);
 const Trade = mongoose.model('Trade', tradeSchema);
 const Transaction = mongoose.model('Transaction', transactionSchema);
 const Withdrawal = mongoose.model('Withdrawal', withdrawalSchema);
+const ChatMessage = mongoose.model('ChatMessage', chatMessageSchema);
 
 // ============= MIDDLEWARE =============
 const authenticateToken = (req, res, next) => {
@@ -203,6 +218,119 @@ app.post('/api/login', async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: 'Login failed' });
+    }
+});
+
+// ============= CHAT ROUTES =============
+
+// User sends a message
+app.post('/api/chat/send', authenticateToken, async (req, res) => {
+    try {
+        const { message } = req.body;
+        const user = await User.findById(req.user.id);
+        
+        if (!message || message.trim() === '') {
+            return res.status(400).json({ error: 'Message cannot be empty' });
+        }
+        
+        const chatMessage = new ChatMessage({
+            userId: user._id,
+            userEmail: user.email,
+            userName: user.fullName,
+            message: message.trim(),
+            sender: 'user',
+            readByAdmin: false
+        });
+        
+        await chatMessage.save();
+        
+        res.json({ success: true, message: 'Message sent successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to send message' });
+    }
+});
+
+// User gets their chat history
+app.get('/api/chat/messages', authenticateToken, async (req, res) => {
+    try {
+        const messages = await ChatMessage.find({ userId: req.user.id }).sort({ createdAt: 1 }).limit(100);
+        const unreadCount = messages.filter(m => m.adminReply && !m.readByAdmin).length;
+        
+        // Mark messages as read
+        await ChatMessage.updateMany(
+            { userId: req.user.id, adminReply: { $ne: '' }, readByAdmin: false },
+            { readByAdmin: true }
+        );
+        
+        res.json({ success: true, messages, unreadCount });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+});
+
+// Admin gets all chats
+app.get('/api/admin/chats', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const chats = await ChatMessage.aggregate([
+            { $sort: { createdAt: -1 } },
+            { $group: { _id: '$userId', lastMessage: { $first: '$$ROOT' }, unreadCount: { $sum: { $cond: [{ $and: [{ $eq: ['$adminReply', ''] }, { $eq: ['$readByAdmin', false }] }, 1, 0] } } } },
+            { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
+            { $unwind: '$user' }
+        ]);
+        
+        res.json({ success: true, chats });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch chats' });
+    }
+});
+
+// Admin gets conversation with a user
+app.get('/api/admin/chats/:userId', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const messages = await ChatMessage.find({ userId: req.params.userId }).sort({ createdAt: 1 });
+        res.json({ success: true, messages });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch conversation' });
+    }
+});
+
+// Admin replies to a user
+app.post('/api/admin/chats/reply', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const { userId, reply } = req.body;
+        const admin = await User.findById(req.user.id);
+        
+        if (!reply || reply.trim() === '') {
+            return res.status(400).json({ error: 'Reply cannot be empty' });
+        }
+        
+        // Update the latest message from user with admin reply
+        const lastUserMessage = await ChatMessage.findOne({ userId: userId, sender: 'user' }).sort({ createdAt: -1 });
+        
+        if (lastUserMessage) {
+            lastUserMessage.adminReply = reply.trim();
+            lastUserMessage.repliedAt = new Date();
+            lastUserMessage.repliedBy = admin.fullName;
+            await lastUserMessage.save();
+        } else {
+            // Create a new admin message if no user message exists
+            const user = await User.findById(userId);
+            const adminMessage = new ChatMessage({
+                userId: userId,
+                userEmail: user.email,
+                userName: user.fullName,
+                message: reply.trim(),
+                sender: 'admin',
+                adminReply: reply.trim()
+            });
+            await adminMessage.save();
+        }
+        
+        res.json({ success: true, message: 'Reply sent successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to send reply' });
     }
 });
 
@@ -310,7 +438,7 @@ function analyzeMarket(symbol, currentPrice, change24h, volume, volatility) {
     return analysis;
 }
 
-// ============= UPDATE ACTIVE TRADES - ONLY WHEN TIME EXPIRES =============
+// ============= UPDATE ACTIVE TRADES =============
 async function updateActiveTrades() {
     const activeTrades = await Trade.find({ status: 'active' });
     const now = Date.now();
@@ -319,37 +447,28 @@ async function updateActiveTrades() {
         const startedAt = new Date(trade.startedAt).getTime();
         const elapsed = now - startedAt;
         
-        // Calculate simulated price for display (just for visual, not for completion)
         let progress = Math.min(1, elapsed / trade.durationMs);
         let simulatedPrice = trade.entryPrice;
         
-        // Simple price simulation for display - small movement
         if (trade.side === 'buy') {
-            // Small upward trend for buys
-            const movement = (Math.random() - 0.48) * 0.001; // Very small random movement
+            const movement = (Math.random() - 0.48) * 0.001;
             simulatedPrice = trade.entryPrice * (1 + (progress * 0.0005) + movement);
         } else {
-            // Small downward trend for sells
             const movement = (Math.random() - 0.52) * 0.001;
             simulatedPrice = trade.entryPrice * (1 - (progress * 0.0005) + movement);
         }
         
         trade.exitPrice = simulatedPrice;
         
-        // CRITICAL: ONLY complete trade when time has fully elapsed
         if (elapsed >= trade.durationMs) {
-            console.log(`Trade completed after ${elapsed}ms (duration: ${trade.durationMs}ms)`);
+            console.log(`Trade completed after ${elapsed}ms`);
             
-            // Determine if trade was winning or losing
-            // For demo purposes, 70% win rate, 30% loss rate
-            const isWin = Math.random() < 0.7; // 70% chance to win
+            const isWin = Math.random() < 0.7;
             
             let profit = 0;
             if (isWin) {
-                // Winning trade: 88% profit
                 profit = trade.amount * 0.88;
             } else {
-                // Losing trade: max $10 loss
                 profit = -10;
             }
             
@@ -359,7 +478,6 @@ async function updateActiveTrades() {
             
             const user = await User.findById(trade.userId);
             if (user) {
-                // Return original stake + profit/loss
                 const amountToReturn = trade.amount + profit;
                 user.balance = user.balance + amountToReturn;
                 
@@ -392,7 +510,6 @@ async function updateActiveTrades() {
     }
 }
 
-// Run every 5 seconds to check for completed trades
 setInterval(updateActiveTrades, 5000);
 
 // ============= AI START TRADE =============
@@ -439,11 +556,9 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
         const analysis = analyzeMarket(symbol, currentPrice, change24h, volume, volatility);
         const side = analysis.decision;
         
-        // Deduct investment amount from balance immediately
         user.balance = user.balance - amount;
         await user.save();
         
-        // Get duration display text
         let durationText = duration;
         switch(duration) {
             case '3m': durationText = '3 minutes'; break;
@@ -527,8 +642,7 @@ app.post('/api/ai/stop-trade/:tradeId', authenticateToken, async (req, res) => {
         trade.status = 'stopped';
         trade.endedAt = new Date();
         
-        // When stopped early, user loses the entire amount (or small penalty)
-        const profit = -10; // Max loss $10 when stopping early
+        const profit = -10;
         trade.profit = profit;
         
         const user = await User.findById(req.user.id);
@@ -863,4 +977,5 @@ app.listen(PORT, async () => {
     console.log(`📱 Backend API available at: https://algon-flow-market.onrender.com`);
     console.log(`💰 AI Profit set to 88% of stake`);
     console.log(`⏱️ Trades ONLY complete when duration time has fully elapsed`);
+    console.log(`💬 Chat system active - messages auto-delete after 2 days`);
 });

@@ -37,32 +37,9 @@
             animation: float 20s infinite;
         }
 
-        .orb-1 {
-            width: 500px;
-            height: 500px;
-            background: #2dd4bf;
-            top: -200px;
-            right: -100px;
-        }
-
-        .orb-2 {
-            width: 400px;
-            height: 400px;
-            background: #00c6fb;
-            bottom: -150px;
-            left: -100px;
-            animation-delay: -5s;
-        }
-
-        .orb-3 {
-            width: 300px;
-            height: 300px;
-            background: #764ba2;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation-delay: -10s;
-        }
+        .orb-1 { width: 500px; height: 500px; background: #2dd4bf; top: -200px; right: -100px; }
+        .orb-2 { width: 400px; height: 400px; background: #00c6fb; bottom: -150px; left: -100px; animation-delay: -5s; }
+        .orb-3 { width: 300px; height: 300px; background: #764ba2; top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: -10s; }
 
         @keyframes float {
             0%,100% { transform: translate(0,0) scale(1); }
@@ -237,13 +214,8 @@
             font-size: 18px;
         }
 
-        .positive {
-            color: #2dd4bf;
-        }
-
-        .negative {
-            color: #ff6b6b;
-        }
+        .positive { color: #2dd4bf; }
+        .negative { color: #ff6b6b; }
 
         .features-section {
             position: relative;
@@ -515,7 +487,7 @@
     </section>
 
     <div class="footer">
-        <p>&copy; 2024 Algon Flow Market. All rights reserved. | <a href="#" style="color:#2dd4bf;">Terms</a> | <a href="#" style="color:#2dd4bf;">Privacy</a></p>
+        <p>&copy; 2024 Algon Flow Market. All rights reserved. | <a href="terms.html" style="color:#2dd4bf;">Terms</a> | <a href="privacy.html" style="color:#2dd4bf;">Privacy</a></p>
         <p style="margin-top: 10px; font-size: 12px;">Trading involves risk. Past performance does not guarantee future results.</p>
     </div>
 
@@ -532,7 +504,7 @@
     </div>
 
     <script>
-        // HARDCODED RENDER BACKEND URL - This will work from ANY frontend host!
+        // HARDCODED RENDER BACKEND URL
         const API_URL = 'https://algon-flow-market.onrender.com';
 
         async function fetchBTCPrice() {
@@ -558,28 +530,48 @@
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             const errorDiv = document.getElementById('loginError');
-            if (!email || !password) { errorDiv.style.display = 'block'; errorDiv.textContent = 'Please enter email and password'; return; }
+            
+            if (!email || !password) { 
+                errorDiv.style.display = 'block'; 
+                errorDiv.textContent = 'Please enter email and password'; 
+                return; 
+            }
+            
+            errorDiv.style.display = 'none';
+            
             try {
                 const response = await fetch(`${API_URL}/api/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
+                
                 const data = await response.json();
+                
                 if (data.success) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    window.location.href = data.user.isAdmin ? 'admin.html' : 'dashboard.html';
+                    
+                    if (data.user.isAdmin) {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'dashboard.html';
+                    }
                 } else {
                     errorDiv.style.display = 'block';
-                    errorDiv.textContent = data.error || 'Login failed';
-                    setTimeout(() => errorDiv.style.display = 'none', 3000);
+                    errorDiv.textContent = data.error || 'Login failed. Invalid email or password.';
+                    setTimeout(() => errorDiv.style.display = 'none', 5000);
                 }
             } catch(error) {
                 errorDiv.style.display = 'block';
-                errorDiv.textContent = 'Connection error: ' + error.message;
+                errorDiv.textContent = 'Connection error. Please try again.';
                 setTimeout(() => errorDiv.style.display = 'none', 5000);
             }
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('loginModal');
+            if (event.target === modal) closeModals();
         }
     </script>
 </body>
