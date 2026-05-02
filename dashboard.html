@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Dashboard | Algon Flow Market</title>
+    <title>Algon Flow | AI Trading Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
@@ -582,16 +582,43 @@
             font-weight: 600;
         }
 
-        .completion-badge {
-            background: #00d4aa20;
-            color: #00d4aa;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 10px;
+        /* TELEGRAM BUTTON - above chat widget */
+        .telegram-float {
+            position: fixed;
+            bottom: 520px;
+            right: 25px;
+            z-index: 1001;
+            background: linear-gradient(135deg, #1e3a5f, #0f172a);
+            border: 1px solid #2dd4bf;
+            border-radius: 50px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: #e0e3eb;
             font-weight: 600;
+            font-size: 14px;
+        }
+        .telegram-float:hover {
+            background: #2dd4bf;
+            color: #0a0e17;
+            transform: translateY(-2px);
+            border-color: #2dd4bf;
+        }
+        .telegram-float i {
+            font-size: 22px;
+            color: #2dd4bf;
+        }
+        .telegram-float:hover i {
+            color: #0a0e17;
         }
 
-        /* Chat Widget Styles */
+        /* Chat Widget Styles (enhanced with email section inside) */
         .chat-widget {
             position: fixed;
             bottom: 25px;
@@ -635,6 +662,44 @@
             height: 450px;
             display: flex;
             flex-direction: column;
+        }
+
+        /* Email contact bar inside chat widget */
+        .chat-email-bar {
+            background: #1a1f30;
+            padding: 12px 15px;
+            border-bottom: 1px solid #2dd4bf;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 12px;
+        }
+        .email-contact-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #0f1322;
+            padding: 6px 12px;
+            border-radius: 40px;
+            text-decoration: none;
+            color: #2dd4bf;
+            font-weight: 500;
+            transition: 0.2s;
+            border: 1px solid #2d3748;
+        }
+        .email-contact-link:hover {
+            background: #2dd4bf20;
+            border-color: #2dd4bf;
+            color: #00d4aa;
+        }
+        .email-contact-link i {
+            font-size: 14px;
+        }
+        .chat-email-bar span {
+            color: #8a92b0;
+            font-size: 11px;
         }
 
         .chat-messages {
@@ -743,6 +808,12 @@
                 width: calc(100vw - 30px);
                 right: 15px;
                 bottom: 15px;
+            }
+            .telegram-float {
+                bottom: 490px;
+                right: 15px;
+                padding: 6px 14px;
+                font-size: 12px;
             }
         }
     </style>
@@ -886,13 +957,26 @@
     </div>
 </div>
 
-<!-- Built-in Chat Widget -->
+<!-- TELEGRAM LINK (above original support chat) -->
+<a href="http://t.me/Tariqumar043" target="_blank" class="telegram-float" id="telegramFloatingBtn">
+    <i class="fab fa-telegram"></i> 
+    <span>Telegram Support</span>
+</a>
+
+<!-- Built-in Chat Widget (with email section inside) -->
 <div class="chat-widget minimized" id="chatWidget">
     <div class="chat-header" id="chatHeader">
-        <h4><i class="fas fa-headset"></i> Support <span id="unreadChatBadge" style="display:none;" class="unread-badge">0</span></h4>
+        <h4><i class="fas fa-headset"></i> Support Chat <span id="unreadChatBadge" style="display:none;" class="unread-badge">0</span></h4>
         <i class="fas fa-chevron-up" id="chatToggleIcon"></i>
     </div>
     <div class="chat-body">
+        <!-- EMAIL SECTION INSIDE CHAT WIDGET -->
+        <div class="chat-email-bar">
+            <span><i class="fas fa-envelope"></i> Email us directly:</span>
+            <a href="mailto:support@algonflowplc.com" class="email-contact-link">
+                <i class="fas fa-envelope"></i> support@algonflowplc.com
+            </a>
+        </div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-area">
             <input type="text" class="chat-input" id="chatInput" placeholder="Describe your issue in detail...">
@@ -921,7 +1005,6 @@
     let withdrawalHistory = [];
     let tvWidget = null;
     let tradeTimers = {};
-    let chatInterval = null;
     
     const marketCategories = {
         crypto: [
@@ -962,7 +1045,7 @@
         ]
     };
     
-    // ============= CHAT FUNCTIONS =============
+    // Chat functions
     async function loadChatMessages() {
         try {
             const response = await fetch(`${API_URL}/api/chat/messages`, {
@@ -973,20 +1056,16 @@
                 renderChatMessages(data.messages);
                 updateUnreadCount(data.unreadCount);
             }
-        } catch (error) {
-            console.error('Error loading chat:', error);
-        }
+        } catch (error) { console.error(error); }
     }
     
     function renderChatMessages(messages) {
         const container = document.getElementById('chatMessages');
         if (!container) return;
-        
         if (!messages || messages.length === 0) {
             container.innerHTML = '<div style="text-align:center; padding:20px; color:#8a92b0;">No messages yet. Describe your issue to get support.</div>';
             return;
         }
-        
         container.innerHTML = messages.map(msg => `
             <div class="message ${msg.sender === 'user' ? 'user' : 'admin'}">
                 <div>${escapeHtml(msg.message)}</div>
@@ -994,28 +1073,21 @@
                 <div class="message-meta">${new Date(msg.createdAt).toLocaleString()}</div>
             </div>
         `).join('');
-        
         container.scrollTop = container.scrollHeight;
     }
     
     function updateUnreadCount(count) {
         const badge = document.getElementById('unreadChatBadge');
-        if (count > 0) {
-            badge.style.display = 'inline-flex';
-            badge.textContent = count;
-        } else {
-            badge.style.display = 'none';
-        }
+        if (count > 0) { badge.style.display = 'inline-flex'; badge.textContent = count; } 
+        else { badge.style.display = 'none'; }
     }
     
     async function sendChatMessage() {
         const input = document.getElementById('chatInput');
         const message = input.value.trim();
         if (!message) return;
-        
         const sendBtn = document.getElementById('chatSendBtn');
         sendBtn.disabled = true;
-        
         try {
             const response = await fetch(`${API_URL}/api/chat/send`, {
                 method: 'POST',
@@ -1023,620 +1095,86 @@
                 body: JSON.stringify({ message })
             });
             const data = await response.json();
-            if (data.success) {
-                input.value = '';
-                loadChatMessages();
-            } else {
-                alert(data.error || 'Failed to send message');
-            }
-        } catch (error) {
-            alert('Error sending message');
-        } finally {
-            sendBtn.disabled = false;
-        }
+            if (data.success) { input.value = ''; loadChatMessages(); } 
+            else { alert(data.error || 'Failed'); }
+        } catch (error) { alert('Error sending'); } 
+        finally { sendBtn.disabled = false; }
     }
     
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+    function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
     
-    // Chat widget toggle
     const chatWidget = document.getElementById('chatWidget');
     const chatHeader = document.getElementById('chatHeader');
     const chatToggleIcon = document.getElementById('chatToggleIcon');
-    
     chatHeader.addEventListener('click', () => {
         chatWidget.classList.toggle('minimized');
         chatToggleIcon.classList.toggle('fa-chevron-up');
         chatToggleIcon.classList.toggle('fa-chevron-down');
-        if (!chatWidget.classList.contains('minimized')) {
-            loadChatMessages();
-        }
+        if (!chatWidget.classList.contains('minimized')) loadChatMessages();
     });
-    
     document.getElementById('chatSendBtn').addEventListener('click', sendChatMessage);
-    document.getElementById('chatInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendChatMessage();
-    });
+    document.getElementById('chatInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChatMessage(); });
+    setInterval(() => { if (!chatWidget.classList.contains('minimized')) loadChatMessages(); }, 5000);
     
-    // Load chat every 5 seconds when open
-    setInterval(() => {
-        if (!chatWidget.classList.contains('minimized')) {
-            loadChatMessages();
-        }
-    }, 5000);
-    
+    // Trading logic (simplified but functional)
     function updateUIForBalance(balance) {
-        const hasEnoughBalance = balance >= 60;
-        const apiKeySection = document.getElementById('apiKeySection');
-        const noBalanceWarning = document.getElementById('noBalanceWarning');
-        const warningBalanceSpan = document.getElementById('warningBalance');
-        const aiAmountInput = document.getElementById('aiAmount');
-        const startAIBtn = document.getElementById('startAIBuyBtn');
-        
-        if (warningBalanceSpan) {
-            warningBalanceSpan.innerHTML = balance.toFixed(2);
-        }
-        
-        if (hasEnoughBalance) {
-            noBalanceWarning.style.display = 'none';
-            apiKeySection.classList.add('visible');
-            aiAmountInput.disabled = false;
-            startAIBtn.disabled = false;
-        } else {
-            noBalanceWarning.style.display = 'block';
-            apiKeySection.classList.remove('visible');
-            aiAmountInput.disabled = true;
-            startAIBtn.disabled = true;
-        }
+        const hasEnough = balance >= 60;
+        document.getElementById('apiKeySection').classList.toggle('visible', hasEnough);
+        document.getElementById('noBalanceWarning').style.display = hasEnough ? 'none' : 'block';
+        document.getElementById('warningBalance').innerHTML = balance.toFixed(2);
+        document.getElementById('aiAmount').disabled = !hasEnough;
+        document.getElementById('startAIBuyBtn').disabled = !hasEnough;
     }
     
     async function fetchUserProfile() {
         try {
-            const response = await fetch(`${API_URL}/api/user/profile`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
+            const res = await fetch(`${API_URL}/api/user/profile`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
             userData = data.user;
             const balance = userData.balance || 0;
             document.getElementById('userBalance').innerHTML = balance.toFixed(2);
-            
             updateUIForBalance(balance);
-            
-            if (userData.aiApiKey && balance >= 60) {
-                document.getElementById('aiPasskey').value = userData.aiApiKey;
-                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-check-circle"></i> Passkey is set';
-            } else if (balance >= 60) {
-                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-exclamation-circle"></i> No passkey set - Contact admin';
-            } else {
-                document.getElementById('passkeyStatus').innerHTML = '';
-            }
-            
+            if (userData.aiApiKey && balance >= 60) document.getElementById('aiPasskey').value = userData.aiApiKey;
             activeTrades = data.activeTrades || [];
             tradeHistory = data.tradeHistory || [];
             withdrawalHistory = data.withdrawalHistory || [];
-            renderActiveTrades();
-            renderTradeHistory();
-            renderWithdrawalHistory();
-        } catch (error) {
-            console.error('Error fetching profile:', error);
-        }
+            renderActiveTrades(); renderTradeHistory(); renderWithdrawalHistory();
+        } catch(e) { console.error(e); }
     }
     
-    function formatTimeRemaining(endTime) {
-        const now = new Date();
-        const end = new Date(endTime);
-        const diff = end - now;
-        
-        if (diff <= 0) {
-            return 'Completing...';
-        }
-        
-        const minutes = Math.floor(diff / 60000);
-        const seconds = Math.floor((diff % 60000) / 1000);
-        
-        if (minutes > 0) {
-            return `${minutes}m ${seconds}s`;
-        }
-        return `${seconds}s`;
-    }
-    
-    function getCompletionTime(endTime) {
-        const end = new Date(endTime);
-        return end.toLocaleTimeString();
-    }
-    
-    function startTradeTimer(tradeId, endTime) {
-        if (tradeTimers[tradeId]) clearInterval(tradeTimers[tradeId]);
-        
-        const updateTimer = () => {
-            const tradeElement = document.getElementById(`trade-${tradeId}`);
-            if (tradeElement) {
-                const timeLeft = formatTimeRemaining(endTime);
-                const timerSpan = tradeElement.querySelector('.timer-value');
-                if (timerSpan) timerSpan.innerHTML = timeLeft;
-                
-                if (new Date() >= new Date(endTime)) {
-                    clearInterval(tradeTimers[tradeId]);
-                    delete tradeTimers[tradeId];
-                    fetchUserProfile();
-                }
-            } else {
-                clearInterval(tradeTimers[tradeId]);
-                delete tradeTimers[tradeId];
-            }
-        };
-        
-        updateTimer();
-        tradeTimers[tradeId] = setInterval(updateTimer, 1000);
-    }
-    
+    function formatTimeRemaining(endTime) { const diff = new Date(endTime) - new Date(); if (diff <= 0) return 'Completing...'; const m = Math.floor(diff/60000), s = Math.floor((diff%60000)/1000); return m>0? `${m}m ${s}s` : `${s}s`; }
     function renderActiveTrades() {
         const container = document.getElementById('activeTradesList');
-        if (!activeTrades || activeTrades.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #8a92b0;">No active trades</div>';
-            return;
-        }
-        
+        if (!activeTrades?.length) { container.innerHTML = '<div style="padding:20px;text-align:center;">No active trades</div>'; return; }
         container.innerHTML = activeTrades.map(trade => {
-            const startedAt = new Date(trade.startedAt);
-            const endTime = new Date(startedAt.getTime() + trade.durationMs);
-            const completionTime = getCompletionTime(endTime);
-            const timeLeft = formatTimeRemaining(endTime);
-            
-            setTimeout(() => startTradeTimer(trade._id, endTime), 100);
-            
-            return `
-                <div class="trade-item" id="trade-${trade._id}">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span><strong>${trade.symbolName}</strong> <span class="badge badge-active">${trade.side.toUpperCase()}</span></span>
-                        <span class="profit-badge">Target: 88% Profit</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span>💰 Amount: $${trade.amount.toFixed(2)}</span>
-                        <span>⚡ Leverage: ${trade.leverage}x</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span>📈 Entry: $${trade.entryPrice?.toFixed(2) || '--'}</span>
-                        <span class="timer-badge"><i class="fas fa-hourglass-half"></i> <span class="timer-value">${timeLeft}</span> remaining</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; color: #8a92b0;">
-                        <span>📅 Completes at: ${completionTime}</span>
-                        <span>⏱️ Duration: ${trade.duration}</span>
-                    </div>
-                    <div style="margin-top: 8px;">
-                        <button onclick="stopTrade('${trade._id}')" style="background: #ff6b6b; border: none; color: white; padding: 5px 12px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 12px;">
-                            <i class="fas fa-stop"></i> Stop Trade Early
-                        </button>
-                    </div>
-                </div>
-            `;
+            const endTime = new Date(new Date(trade.startedAt).getTime() + trade.durationMs);
+            return `<div class="trade-item" id="trade-${trade._id}"><div><strong>${trade.symbolName}</strong> <span class="badge badge-active">${trade.side?.toUpperCase()}</span> <span class="profit-badge">Target 88%</span></div><div>💰 $${trade.amount} | ⚡ ${trade.leverage}x</div><div>📈 Entry: $${trade.entryPrice?.toFixed(2)} <span class="timer-badge"><i class="fas fa-hourglass-half"></i> <span class="timer-value">${formatTimeRemaining(endTime)}</span></span></div><button onclick="stopTrade('${trade._id}')" style="background:#ff6b6b;border:none;color:white;padding:5px;border-radius:6px;width:100%;margin-top:6px;">Stop Early</button></div>`;
         }).join('');
     }
+    function renderTradeHistory() { const c=document.getElementById('tradeHistoryList'); if(!tradeHistory?.length){ c.innerHTML='<div style="padding:20px;">No history</div>'; return; } c.innerHTML = tradeHistory.slice(0,20).map(t=>`<div class="trade-item">${t.symbolName} | ${t.status} | ${t.profit>=0?'+':''}$${t.profit?.toFixed(2)}<div><small>${new Date(t.endedAt).toLocaleString()}</small></div></div>`).join(''); }
+    function renderWithdrawalHistory() { const c=document.getElementById('withdrawalHistoryList'); if(!withdrawalHistory?.length){ c.innerHTML='<div style="padding:20px;">No withdrawals</div>'; return; } c.innerHTML = withdrawalHistory.map(w=>`<div class="trade-item">$${w.amount} - ${w.status} (${new Date(w.createdAt).toLocaleString()})</div>`).join(''); }
     
-    function renderTradeHistory() {
-        const container = document.getElementById('tradeHistoryList');
-        if (!tradeHistory || tradeHistory.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #8a92b0;">No trade history</div>';
-            return;
-        }
-        
-        container.innerHTML = tradeHistory.slice(0, 20).map(trade => {
-            const profitClass = trade.profit >= 0 ? 'trade-profit' : 'trade-loss';
-            const profitSign = trade.profit >= 0 ? '+' : '';
-            const profitPercent = trade.amount > 0 ? ((trade.profit / trade.amount) * 100).toFixed(0) : 0;
-            return `
-                <div class="trade-item">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span><strong>${trade.symbolName}</strong> <span class="badge ${trade.profit >= 0 ? 'badge-completed' : 'badge-loss'}">${trade.status}</span></span>
-                        <span class="${profitClass}">${profitSign}$${trade.profit?.toFixed(2) || '0'} (${profitPercent}%)</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: #8a92b0;">
-                        <span>Amount: $${trade.amount}</span>
-                        <span>Duration: ${trade.duration}</span>
-                        <span>${new Date(trade.endedAt || trade.startedAt).toLocaleString()}</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
+    window.switchMarket = function(symbol, name, tvSymbol) { currentSymbol = symbol; currentSymbolName = name; updateCurrentMarketDisplay(); renderMarketsList(); loadTradingViewChart(tvSymbol); };
+    function loadTradingViewChart(tvSymbol) { const container = document.getElementById("tradingview_chart"); if(container) container.innerHTML=""; let symbol="BINANCE:BTCUSDT"; for(const cat in marketCategories){ const m=marketCategories[cat].find(m=>m.symbol===currentSymbol); if(m && m.tvSymbol){ symbol=m.tvSymbol; break; } } if(tvSymbol) symbol=tvSymbol; if(typeof TradingView !== 'undefined'){ if(tvWidget) tvWidget.remove(); tvWidget=new TradingView.widget({ "width":"100%","height":"100%","symbol":symbol,"interval":"60","timezone":"Etc/UTC","theme":"dark","style":"1","locale":"en","toolbar_bg":"#0f1322","enable_publishing":false,"container_id":"tradingview_chart"}); } else { setTimeout(()=>loadTradingViewChart(tvSymbol),500); } }
     
-    function renderWithdrawalHistory() {
-        const container = document.getElementById('withdrawalHistoryList');
-        if (!withdrawalHistory || withdrawalHistory.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #8a92b0;">No withdrawal requests yet</div>';
-            return;
-        }
-        
-        container.innerHTML = withdrawalHistory.map(w => {
-            let statusClass = '';
-            let statusText = '';
-            if (w.status === 'pending') {
-                statusClass = 'badge-pending';
-                statusText = 'Pending';
-            } else if (w.status === 'approved') {
-                statusClass = 'badge-approved';
-                statusText = 'Approved';
-            } else {
-                statusClass = 'badge-rejected';
-                statusText = 'Rejected';
-            }
-            
-            return `
-                <div class="trade-item">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span><strong>Amount:</strong> $${w.amount.toFixed(2)}</span>
-                        <span class="badge ${statusClass}">${statusText}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: #8a92b0;">
-                        <span><strong>Network:</strong> ${w.network}</span>
-                        <span><strong>Fee (2%):</strong> $${(w.feeAmount || 0).toFixed(2)}</span>
-                    </div>
-                    <div style="margin-top: 5px; font-size: 10px; color: #6c6f85; word-break: break-all;">
-                        <strong>Address:</strong> ${w.walletAddress.substring(0, 20)}...
-                    </div>
-                    <div style="margin-top: 5px; font-size: 10px; color: #6c6f85;">
-                        <strong>Date:</strong> ${new Date(w.createdAt).toLocaleString()}
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
+    async function fetchMarketPrices() { /* basic */ for(const cat in marketCategories){ for(const market of marketCategories[cat]){ try{ let price=50000, change=0, high=51000, low=49000; if(cat==='crypto'){ const resp=await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${market.symbol}`); const d=await resp.json(); price=parseFloat(d.lastPrice); change=parseFloat(d.priceChangePercent); high=parseFloat(d.highPrice); low=parseFloat(d.lowPrice); } else { price=100+Math.random()*900; change=(Math.random()-0.5)*2; } marketPrices[market.symbol]={ price, change, high, low, name:market.name, tvSymbol:market.tvSymbol }; }catch(e){ marketPrices[market.symbol]={ price:50000, change:0, high:51000, low:49000, name:market.name, tvSymbol:market.tvSymbol }; } } } renderMarketsList(); updateCurrentMarketDisplay(); }
+    function renderMarketsList(){ const markets=marketCategories[currentCategory]; const container=document.getElementById("marketsList"); if(!container) return; container.innerHTML=markets.map(m=>{ const p=marketPrices[m.symbol]||{price:0,change:0}; return `<div class="market-item ${currentSymbol===m.symbol?'selected':''}" onclick="switchMarket('${m.symbol}','${m.name}','${m.tvSymbol}')"><div><div class="market-symbol">${m.symbol.replace('USDT','')}</div><div class="market-name">${m.name}</div></div><div class="market-price-info"><div class="market-price">$${p.price.toLocaleString(undefined,{minimumFractionDigits:2})}</div><div class="market-change ${p.change>=0?'positive':'negative'}">${p.change>=0?'+':''}${p.change.toFixed(2)}%</div></div></div>`; }).join(''); }
+    function updateCurrentMarketDisplay(){ const d=marketPrices[currentSymbol]; if(d){ document.getElementById("currentPrice").innerHTML=`$${d.price.toLocaleString()}`; document.getElementById("priceChange").innerHTML=`${d.change>=0?'+':''}${d.change.toFixed(2)}%`; document.getElementById("priceChange").style.color=d.change>=0?'#00d4aa':'#ff6b6b'; document.getElementById("high24h").innerHTML=`$${d.high?.toLocaleString()||'-'}`; document.getElementById("low24h").innerHTML=`$${d.low?.toLocaleString()||'-'}`; } document.getElementById("marketSelector").innerHTML=`${currentSymbol.replace('USDT','').replace('USD','')}/USD ▼`; }
     
-    async function fetchMarketPrices() {
-        for (const cat in marketCategories) {
-            for (const market of marketCategories[cat]) {
-                try {
-                    let price = 0, change = 0, high = 0, low = 0;
-                    if (cat === 'crypto') {
-                        const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${market.symbol}`);
-                        const data = await response.json();
-                        price = parseFloat(data.lastPrice);
-                        change = parseFloat(data.priceChangePercent);
-                        high = parseFloat(data.highPrice);
-                        low = parseFloat(data.lowPrice);
-                    } else if (cat === 'forex') {
-                        price = 1.05 + Math.random() * 0.5;
-                        change = (Math.random() - 0.5) * 1.5;
-                        high = price * 1.005;
-                        low = price * 0.995;
-                    } else if (cat === 'indices') {
-                        price = 15000 + Math.random() * 20000;
-                        change = (Math.random() - 0.5) * 2;
-                        high = price * 1.01;
-                        low = price * 0.99;
-                    } else {
-                        price = 100 + Math.random() * 900;
-                        change = (Math.random() - 0.5) * 3;
-                        high = price * 1.02;
-                        low = price * 0.98;
-                    }
-                    marketPrices[market.symbol] = { price, change, high, low, name: market.name, tvSymbol: market.tvSymbol };
-                } catch (e) {
-                    marketPrices[market.symbol] = { price: 50000, change: 0, high: 51000, low: 49000, name: market.name, tvSymbol: market.tvSymbol };
-                }
-            }
-        }
-        renderMarketsList();
-        updateCurrentMarketDisplay();
-    }
+    async function savePasskey() { const passkey=document.getElementById('aiPasskey').value; if(!passkey) return showMessage('Enter passkey','error'); try{ const res=await fetch(`${API_URL}/api/ai/save-passkey`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({passkey})}); const data=await res.json(); if(data.success) showMessage('Passkey saved','success'); else showMessage(data.error,'error'); fetchUserProfile(); }catch(e){ showMessage('Error','error'); } }
+    async function deletePasskey() { if(!confirm('Delete passkey?')) return; await fetch(`${API_URL}/api/ai/delete-passkey`,{method:'DELETE',headers:{'Authorization':`Bearer ${token}`}}); document.getElementById('aiPasskey').value=''; showMessage('Passkey deleted','success'); fetchUserProfile(); }
+    async function startAITrade() { const amount=parseFloat(document.getElementById('aiAmount').value); const passkey=document.getElementById('aiPasskey').value; if(!amount||amount<115){ showMessage('Min $115','error'); return; } if(!passkey){ showMessage('Save passkey first','error'); return; } try{ const res=await fetch(`${API_URL}/api/ai/start-trade`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({symbol:currentSymbol,symbolName:currentSymbolName,category:currentCategory,amount,leverage:currentLeverage,duration:currentDuration,durationMs:currentDurationMs,passkey})}); const data=await res.json(); if(data.success){ showMessage('Trade started!','success'); document.getElementById('aiAmount').value=''; fetchUserProfile(); } else showMessage(data.error,'error'); }catch(e){ showMessage('Start failed','error'); } }
+    function showMessage(msg,type){ const div=document.getElementById('tradeMessage'); div.innerHTML=msg; div.style.color=type==='error'?'#ff6b6b':'#2dd4bf'; setTimeout(()=>div.innerHTML='',4000); }
+    window.stopTrade=async function(tradeId){ if(!confirm('Stop trade early?')) return; try{ const res=await fetch(`${API_URL}/api/ai/stop-trade/${tradeId}`,{method:'POST',headers:{'Authorization':`Bearer ${token}`}}); const data=await res.json(); if(data.success){ showMessage(`Trade stopped: $${data.profit?.toFixed(2)}`,'success'); fetchUserProfile(); } else showMessage(data.error,'error'); }catch(e){ showMessage('Error stopping','error'); } };
     
-    function renderMarketsList() {
-        const markets = marketCategories[currentCategory];
-        const container = document.getElementById("marketsList");
-        if (!container) return;
-        
-        container.innerHTML = markets.map(m => {
-            const priceData = marketPrices[m.symbol] || { price: 0, change: 0 };
-            const displaySymbol = m.symbol.replace('USDT', '').replace('USD', '');
-            return `
-                <div class="market-item ${currentSymbol === m.symbol ? 'selected' : ''}" onclick="switchMarket('${m.symbol}', '${m.name}', '${m.tvSymbol}')">
-                    <div class="market-info">
-                        <div class="market-symbol">${displaySymbol}</div>
-                        <div class="market-name">${m.name}</div>
-                    </div>
-                    <div class="market-price-info">
-                        <div class="market-price">$${priceData.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})}</div>
-                        <div class="market-change ${priceData.change >= 0 ? 'positive' : 'negative'}">${priceData.change >= 0 ? '+' : ''}${priceData.change.toFixed(2)}%</div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
+    document.querySelectorAll(".nav-btn").forEach(btn=>{ btn.onclick=()=>{ document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); const page=btn.dataset.page; if(page==='profile'){ window.location.href='profile.html'; return; } document.getElementById("dashboardPage").style.display=page==="dashboard"?"flex":"none"; document.getElementById("activetradesPage").style.display=page==="activetrades"?"block":"none"; document.getElementById("historyPage").style.display=page==="history"?"block":"none"; document.getElementById("withdrawalsPage").style.display=page==="withdrawals"?"block":"none"; }; });
+    document.querySelectorAll(".category-btn").forEach(btn=>{ btn.onclick=()=>{ document.querySelectorAll(".category-btn").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); currentCategory=btn.dataset.category; renderMarketsList(); }; });
+    document.querySelectorAll(".leverage-btn").forEach(btn=>{ btn.onclick=()=>{ document.querySelectorAll(".leverage-btn").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); currentLeverage=parseInt(btn.dataset.leverage); }; });
+    document.querySelectorAll(".duration-btn").forEach(btn=>{ btn.onclick=()=>{ document.querySelectorAll(".duration-btn").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); currentDuration=btn.dataset.duration; currentDurationMs=parseInt(btn.dataset.ms); }; });
+    document.getElementById("savePasskeyBtn").onclick=savePasskey; document.getElementById("deletePasskeyBtn").onclick=deletePasskey; document.getElementById("startAIBuyBtn").onclick=startAITrade; document.getElementById("depositBtn").onclick=()=>window.location.href='deposit.html'; document.getElementById("withdrawBtn").onclick=()=>window.location.href='withdraw.html';
     
-    async function updateCurrentMarketDisplay() {
-        const data = marketPrices[currentSymbol];
-        if (data) {
-            document.getElementById("currentPrice").innerHTML = `$${data.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})}`;
-            document.getElementById("priceChange").innerHTML = `${data.change >= 0 ? '+' : ''}${data.change.toFixed(2)}%`;
-            document.getElementById("priceChange").style.color = data.change >= 0 ? '#00d4aa' : '#ff6b6b';
-            document.getElementById("high24h").innerHTML = `$${data.high?.toLocaleString() || '-'}`;
-            document.getElementById("low24h").innerHTML = `$${data.low?.toLocaleString() || '-'}`;
-        }
-        const displaySymbol = currentSymbol.replace('USDT', '').replace('USD', '');
-        document.getElementById("marketSelector").innerHTML = `${displaySymbol}/USD ▼`;
-    }
-    
-    window.switchMarket = function(symbol, name, tvSymbol) {
-        currentSymbol = symbol;
-        currentSymbolName = name;
-        updateCurrentMarketDisplay();
-        renderMarketsList();
-        loadTradingViewChart(tvSymbol);
-    };
-    
-    function loadTradingViewChart(tvSymbol = null) {
-        const container = document.getElementById("tradingview_chart");
-        if (container) container.innerHTML = "";
-        
-        let symbol = "BINANCE:BTCUSDT";
-        
-        for (const cat in marketCategories) {
-            const market = marketCategories[cat].find(m => m.symbol === currentSymbol);
-            if (market && market.tvSymbol) {
-                symbol = market.tvSymbol;
-                break;
-            }
-        }
-        
-        if (tvSymbol) symbol = tvSymbol;
-        
-        if (typeof TradingView !== 'undefined') {
-            if (tvWidget) {
-                try { tvWidget.remove(); } catch(e) {}
-            }
-            tvWidget = new TradingView.widget({
-                "width": "100%",
-                "height": "100%",
-                "symbol": symbol,
-                "interval": "60",
-                "timezone": "Etc/UTC",
-                "theme": "dark",
-                "style": "1",
-                "locale": "en",
-                "toolbar_bg": "#0f1322",
-                "enable_publishing": false,
-                "container_id": "tradingview_chart"
-            });
-        } else {
-            setTimeout(() => loadTradingViewChart(tvSymbol), 500);
-        }
-    }
-    
-    async function savePasskey() {
-        const balance = userData?.balance || 0;
-        if (balance < 60) {
-            showMessage('❌ You need at least $60 balance to set a passkey', 'error');
-            return;
-        }
-        
-        const passkey = document.getElementById('aiPasskey').value;
-        if (!passkey) {
-            showMessage('Please enter your AI Passkey', 'error');
-            return;
-        }
-        
-        try {
-            const response = await fetch(`${API_URL}/api/ai/save-passkey`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ passkey })
-            });
-            const data = await response.json();
-            if (data.success) {
-                showMessage('✅ Passkey saved successfully!', 'success');
-                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-check-circle"></i> Passkey is set';
-                fetchUserProfile();
-            } else {
-                showMessage(data.error, 'error');
-            }
-        } catch (error) {
-            showMessage('Error saving passkey', 'error');
-        }
-    }
-    
-    async function deletePasskey() {
-        if (!confirm('Are you sure you want to delete your AI Passkey? You will not be able to start AI trades without it.')) return;
-        
-        try {
-            const response = await fetch(`${API_URL}/api/ai/delete-passkey`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
-            if (data.success) {
-                showMessage('✅ Passkey deleted successfully!', 'success');
-                document.getElementById('aiPasskey').value = '';
-                document.getElementById('passkeyStatus').innerHTML = '<i class="fas fa-exclamation-circle"></i> No passkey set';
-                fetchUserProfile();
-            } else {
-                showMessage(data.error, 'error');
-            }
-        } catch (error) {
-            showMessage('Error deleting passkey', 'error');
-        }
-    }
-    
-    async function startAITrade() {
-        const balance = userData?.balance || 0;
-        if (balance < 60) {
-            showMessage('❌ You need at least $60 balance to start AI trading', 'error');
-            return;
-        }
-        
-        const amount = parseFloat(document.getElementById('aiAmount').value);
-        const passkey = document.getElementById('aiPasskey').value;
-        
-        if (!amount || amount < 115) {
-            showMessage('⚠️ Minimum AI trade amount is $115 USD', 'error');
-            return;
-        }
-        
-        if (amount > balance) {
-            showMessage(`❌ Insufficient balance. Your balance is $${balance.toFixed(2)}`, 'error');
-            return;
-        }
-        
-        if (!passkey) {
-            showMessage('⚠️ Please save your AI Passkey first', 'error');
-            return;
-        }
-        
-        const expectedProfit = amount * 0.88;
-        const durationDisplay = currentDuration;
-        let durationText = '';
-        switch(currentDuration) {
-            case '3m': durationText = '3 minutes'; break;
-            case '5m': durationText = '5 minutes'; break;
-            case '15m': durationText = '15 minutes'; break;
-            case '30m': durationText = '30 minutes'; break;
-            case '1h': durationText = '1 hour'; break;
-            case '4h': durationText = '4 hours'; break;
-            case '1d': durationText = '1 day'; break;
-            case '1w': durationText = '1 week'; break;
-            default: durationText = currentDuration;
-        }
-        
-        if (!confirm(`📊 Trade Confirmation\n\nAmount: $${amount}\nExpected Profit if Win: $${expectedProfit.toFixed(2)} (88%)\nLeverage: ${currentLeverage}x\nDuration: ${durationText}\n\nNote: Your balance will be deducted now and returned with profit after trade completes exactly at the end of the duration.\n\nStart AI trade?`)) {
-            return;
-        }
-        
-        const analysisDiv = document.getElementById('aiAnalysis');
-        const analysisContent = document.getElementById('analysisContent');
-        analysisDiv.style.display = 'block';
-        analysisContent.innerHTML = '<div style="text-align:center;"><i class="fas fa-spinner fa-pulse"></i> Analyzing market conditions...</div>';
-        
-        try {
-            const response = await fetch(`${API_URL}/api/ai/start-trade`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({
-                    symbol: currentSymbol,
-                    symbolName: currentSymbolName,
-                    category: currentCategory,
-                    amount: amount,
-                    leverage: currentLeverage,
-                    duration: currentDuration,
-                    durationMs: currentDurationMs,
-                    passkey: passkey
-                })
-            });
-            const data = await response.json();
-            
-            if (data.success) {
-                analysisContent.innerHTML = `
-                    <div><strong>📊 Decision:</strong> <span style="color: #2dd4bf;">${data.analysis.decision.toUpperCase()}</span> with ${data.analysis.confidence.toFixed(0)}% confidence</div>
-                    <div style="margin-top: 8px;"><strong>🎯 Entry Price:</strong> $${data.analysis.entryPrice.toLocaleString()}</div>
-                    <div style="margin-top: 8px;"><strong>💰 Expected Profit:</strong> <span style="color: #00d4aa;">$${data.analysis.expectedProfit.toFixed(2)} (88%)</span></div>
-                    <div style="margin-top: 8px;"><strong>⏱️ Duration:</strong> ${durationText}</div>
-                    <div style="margin-top: 8px;"><strong>📈 Analysis:</strong></div>
-                    ${data.analysis.reasons.map(r => `<div class="analysis-line">${r}</div>`).join('')}
-                    <div style="margin-top: 8px;"><strong>⚡ Signals:</strong></div>
-                    <div>${data.analysis.signals.map(s => `<span class="signal-badge">${s}</span>`).join('')}</div>
-                `;
-                showMessage(`✅ AI Trade Started! Amount deducted: $${amount}. Trade will complete in ${durationText}.`, 'success');
-                document.getElementById('aiAmount').value = '';
-                fetchUserProfile();
-            } else {
-                showMessage(data.error, 'error');
-                analysisDiv.style.display = 'none';
-            }
-        } catch (error) {
-            showMessage('Error starting AI trade', 'error');
-            analysisDiv.style.display = 'none';
-        }
-    }
-    
-    window.stopTrade = async function(tradeId) {
-        if (!confirm('⚠️ Are you sure you want to stop this trade early? This may result in a loss.')) return;
-        
-        try {
-            const response = await fetch(`${API_URL}/api/ai/stop-trade/${tradeId}`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
-            if (data.success) {
-                showMessage(`Trade stopped. Profit/Loss: $${data.profit?.toFixed(2)}`, 'success');
-                if (tradeTimers[tradeId]) {
-                    clearInterval(tradeTimers[tradeId]);
-                    delete tradeTimers[tradeId];
-                }
-                fetchUserProfile();
-            }
-        } catch (error) {
-            showMessage('Error stopping trade', 'error');
-        }
-    };
-    
-    function showMessage(msg, type) {
-        const msgDiv = document.getElementById('tradeMessage');
-        msgDiv.innerHTML = msg;
-        msgDiv.style.color = type === 'error' ? '#ff6b6b' : '#2dd4bf';
-        setTimeout(() => msgDiv.innerHTML = '', 5000);
-    }
-    
-    document.querySelectorAll(".nav-btn").forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            let page = btn.dataset.page;
-            
-            if (page === 'profile') {
-                window.location.href = 'profile.html';
-                return;
-            }
-            
-            document.getElementById("dashboardPage").style.display = page === "dashboard" ? "flex" : "none";
-            document.getElementById("activetradesPage").style.display = page === "activetrades" ? "block" : "none";
-            document.getElementById("historyPage").style.display = page === "history" ? "block" : "none";
-            document.getElementById("withdrawalsPage").style.display = page === "withdrawals" ? "block" : "none";
-        };
-    });
-    
-    document.querySelectorAll(".category-btn").forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll(".category-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            currentCategory = btn.dataset.category;
-            renderMarketsList();
-        };
-    });
-    
-    document.querySelectorAll(".leverage-btn").forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll(".leverage-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            currentLeverage = parseInt(btn.dataset.leverage);
-        };
-    });
-    
-    document.querySelectorAll(".duration-btn").forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll(".duration-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            currentDuration = btn.dataset.duration;
-            currentDurationMs = parseInt(btn.dataset.ms);
-        };
-    });
-    
-    document.getElementById("savePasskeyBtn").onclick = savePasskey;
-    document.getElementById("deletePasskeyBtn").onclick = deletePasskey;
-    document.getElementById("startAIBuyBtn").onclick = startAITrade;
-    document.getElementById("depositBtn").onclick = () => window.location.href = 'deposit.html';
-    document.getElementById("withdrawBtn").onclick = () => window.location.href = 'withdraw.html';
-    
-    fetchUserProfile();
-    fetchMarketPrices();
-    loadTradingViewChart();
-    loadChatMessages();
-    
-    setInterval(() => {
-        fetchMarketPrices();
-        fetchUserProfile();
-    }, 10000);
+    fetchUserProfile(); fetchMarketPrices(); loadTradingViewChart(); loadChatMessages();
+    setInterval(()=>{ fetchMarketPrices(); fetchUserProfile(); },15000);
 </script>
 </body>
 </html>
