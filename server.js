@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema({
     totalDeposits: { type: Number, default: 0 },
     totalProfit: { type: Number, default: 0 },
     totalLoss: { type: Number, default: 0 },
-    winRate: { type: Number, default: 100 }, // Always 100% win rate
+    winRate: { type: Number, default: 100 },
     totalTrades: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now },
     lastLogin: { type: Date },
@@ -104,7 +104,6 @@ const withdrawalSchema = new mongoose.Schema({
     processedBy: { type: String }
 });
 
-// Deposit Request Schema
 const depositRequestSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     userName: { type: String, required: true },
@@ -116,7 +115,6 @@ const depositRequestSchema = new mongoose.Schema({
     processedBy: { type: String }
 });
 
-// Chat Schema
 const chatMessageSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     userEmail: { type: String, required: true },
@@ -167,7 +165,6 @@ function generatePasskey() {
 }
 
 function calculateProfit(amount) {
-    // Profit is ALWAYS 88% of the stake - NO LOSSES
     return amount * 0.88;
 }
 
@@ -323,24 +320,7 @@ app.post('/api/admin/deposit-requests/:requestId/process', authenticateToken, is
     }
 });
 
-// ============= WITHDRAWAL ROUTES =============
-app.get('/api/user/can-withdraw', authenticateToken, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id);
-        const totalTradingVolume = (user.totalDeposits || 0) + (user.totalProfit || 0);
-        const requiredVolume = (user.balance || 0) * 3;
-        
-        res.json({ 
-            canWithdraw: totalTradingVolume >= requiredVolume,
-            requiredVolume: requiredVolume,
-            currentVolume: totalTradingVolume,
-            balance: user.balance
-        });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to check eligibility' });
-    }
-});
-
+// ============= WITHDRAWAL ROUTES (UPDATED - NO 3x RULE) =============
 app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
     try {
         const { amount, network, address } = req.body;
@@ -349,12 +329,7 @@ app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
         if (amount < 50) return res.status(400).json({ error: 'Minimum withdrawal is $50' });
         if (amount > user.balance) return res.status(400).json({ error: 'Insufficient balance' });
         
-        const totalTradingVolume = (user.totalDeposits || 0) + (user.totalProfit || 0);
-        const requiredVolume = user.balance * 3;
-        
-        if (totalTradingVolume < requiredVolume) {
-            return res.status(400).json({ error: 'Insufficient balance. Contact support' });
-        }
+        // NO 3x BALANCE RULE - REMOVED COMPLETELY
         
         const feeAmount = amount * 0.02;
         const netAmount = amount - feeAmount;
@@ -626,7 +601,7 @@ app.get('/api/ai/get-passkey', authenticateToken, async (req, res) => {
     }
 });
 
-// ============= TRADING FUNCTIONS - ALL PROFITS, NO LOSSES =============
+// ============= TRADING FUNCTIONS =============
 function analyzeMarket(symbol, currentPrice, change24h, volume, volatility) {
     const analysis = {
         decision: null,
@@ -671,7 +646,6 @@ function analyzeMarket(symbol, currentPrice, change24h, volume, volatility) {
     return analysis;
 }
 
-// Update active trades - ALL TRADES ARE PROFITABLE
 async function updateActiveTrades() {
     const activeTrades = await Trade.find({ status: 'active' });
     const now = Date.now();
@@ -694,9 +668,6 @@ async function updateActiveTrades() {
         trade.exitPrice = simulatedPrice;
         
         if (elapsed >= trade.durationMs) {
-            console.log(`Trade completed - PROFIT added for user ${trade.userId}`);
-            
-            // ALWAYS PROFIT - NO LOSSES EVER
             const profit = trade.amount * 0.88;
             
             trade.profit = profit;
@@ -709,7 +680,7 @@ async function updateActiveTrades() {
                 user.balance = user.balance + amountToReturn;
                 user.totalProfit = (user.totalProfit || 0) + profit;
                 user.totalTrades = (user.totalTrades || 0) + 1;
-                user.winRate = 100; // Always 100% win rate
+                user.winRate = 100;
                 
                 await user.save();
                 
@@ -722,8 +693,6 @@ async function updateActiveTrades() {
                     description: `${trade.side.toUpperCase()} trade on ${trade.symbolName} completed. WIN! +${(profit/trade.amount*100).toFixed(0)}% profit added to balance.`
                 });
                 await transaction.save();
-                
-                console.log(`✅ Added $${profit.toFixed(2)} profit to ${user.fullName} (${(profit/trade.amount*100).toFixed(0)}% return)`);
             }
         }
         
@@ -733,7 +702,6 @@ async function updateActiveTrades() {
 
 setInterval(updateActiveTrades, 5000);
 
-// AI Start Trade - ALWAYS PROFITABLE
 app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
     try {
         const { symbol, symbolName, category, amount, leverage, duration, durationMs, passkey } = req.body;
@@ -863,7 +831,6 @@ app.post('/api/ai/stop-trade/:tradeId', authenticateToken, async (req, res) => {
         trade.status = 'stopped';
         trade.endedAt = new Date();
         
-        // Even if stopped early, still give 50% profit instead of loss
         const profit = trade.amount * 0.44;
         trade.profit = profit;
         
@@ -890,6 +857,37 @@ app.get('/api/admin/users', authenticateToken, isAdmin, async (req, res) => {
         res.json(users);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
+// NEW: Get user details with all registration info
+app.get('/api/admin/users/:userId/details', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId).select('-password');
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        
+        // Get additional user data
+        const transactions = await Transaction.find({ userId: req.params.userId }).sort({ createdAt: -1 }).limit(20);
+        const withdrawals = await Withdrawal.find({ userId: req.params.userId }).sort({ createdAt: -1 }).limit(20);
+        const activeTrades = await Trade.find({ userId: req.params.userId, status: 'active' });
+        const completedTrades = await Trade.find({ userId: req.params.userId, status: 'completed' });
+        
+        res.json({
+            user,
+            transactions,
+            withdrawals,
+            activeTrades,
+            completedTrades,
+            stats: {
+                totalDeposits: user.totalDeposits || 0,
+                totalProfit: user.totalProfit || 0,
+                totalTrades: completedTrades.length,
+                activeTrades: activeTrades.length
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch user details' });
     }
 });
 
@@ -1110,5 +1108,5 @@ app.listen(PORT, async () => {
     console.log(`✅ ALL TRADES ARE PROFITABLE - 88% return on every trade`);
     console.log(`✅ No losses - users always make profit`);
     console.log(`✅ Deposit request system active`);
-    console.log(`✅ Withdrawal 3x balance rule active`);
+    console.log(`✅ Withdrawal - NO 3x rule - users can withdraw any amount`);
 });
