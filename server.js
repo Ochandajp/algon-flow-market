@@ -10,7 +10,6 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Allow ALL origins
 app.use(cors({
     origin: '*',
     credentials: true,
@@ -20,7 +19,6 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://officialwrittershub_db_user:Fellix@cluster0.6g8mg9p.mongodb.net/algonflow?retryWrites=true&w=majority';
 
 mongoose.connect(MONGODB_URI)
@@ -54,7 +52,8 @@ const userSchema = new mongoose.Schema({
     termsAcceptedAt: { type: Date },
     isFromUSA: { type: String, default: 'no' },
     expectedDeposit: { type: String, default: '' },
-    aiApiKey: { type: String, default: '' }
+    aiApiKey: { type: String, default: '' },
+    withdrawalLimit: { type: Number, default: null } // NULL means no limit
 });
 
 const tradeSchema = new mongoose.Schema({
@@ -109,6 +108,7 @@ const depositRequestSchema = new mongoose.Schema({
     userName: { type: String, required: true },
     userEmail: { type: String, required: true },
     amount: { type: Number, required: true },
+    network: { type: String, default: 'USDT-TRC20' },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     createdAt: { type: Date, default: Date.now },
     processedAt: { type: Date },
@@ -128,12 +128,23 @@ const chatMessageSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now, expires: 172800 }
 });
 
+// Wallet Address Schema for dynamic deposit addresses
+const walletAddressSchema = new mongoose.Schema({
+    network: { type: String, required: true, unique: true },
+    address: { type: String, required: true },
+    qrCode: { type: String, default: '' },
+    isActive: { type: Boolean, default: true },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+
 const User = mongoose.model('User', userSchema);
 const Trade = mongoose.model('Trade', tradeSchema);
 const Transaction = mongoose.model('Transaction', transactionSchema);
 const Withdrawal = mongoose.model('Withdrawal', withdrawalSchema);
 const DepositRequest = mongoose.model('DepositRequest', depositRequestSchema);
 const ChatMessage = mongoose.model('ChatMessage', chatMessageSchema);
+const WalletAddress = mongoose.model('WalletAddress', walletAddressSchema);
 
 // ============= MIDDLEWARE =============
 const authenticateToken = (req, res, next) => {
@@ -164,10 +175,6 @@ function generatePasskey() {
     return passkey;
 }
 
-function calculateProfit(amount) {
-    return amount * 0.88;
-}
-
 // ============= AUTH ROUTES =============
 app.post('/api/register', async (req, res) => {
     try {
@@ -194,7 +201,8 @@ app.post('/api/register', async (req, res) => {
             isFromUSA: isFromUSA || 'no',
             expectedDeposit: expectedDeposit || '',
             balance: 0,
-            isAdmin: email === 'admin@algonflow.com'
+            isAdmin: email === 'admin@algonflow.com',
+            withdrawalLimit: null
         });
         
         await user.save();
@@ -230,17 +238,96 @@ app.post('/api/login', async (req, res) => {
         res.json({ 
             success: true, 
             token, 
-            user: { id: user._id, email: user.email, fullName: user.fullName, balance: user.balance, isAdmin: user.isAdmin }
+            user: { id: user._id, email: user.email, fullName: user.fullName, balance: user.balance, isAdmin: user.isAdmin, withdrawalLimit: user.withdrawalLimit }
         });
     } catch (error) {
         res.status(500).json({ error: 'Login failed' });
     }
 });
 
+// ============= WALLET ADDRESS MANAGEMENT (ADMIN) =============
+app.get('/api/admin/wallets', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const wallets = await WalletAddress.find().sort({ createdAt: -1 });
+        res.json({ success: true, wallets });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch wallets' });
+    }
+});
+
+app.post('/api/admin/wallets', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const { network, address } = req.body;
+        if (!network || !address) {
+            return res.status(400).json({ error: 'Network and address are required' });
+        }
+        
+        let wallet = await WalletAddress.findOne({ network });
+        if (wallet) {
+            wallet.address = address;
+            wallet.updatedAt = new Date();
+            await wallet.save();
+            res.json({ success: true, message: 'Wallet updated successfully', wallet });
+        } else {
+            wallet = new WalletAddress({ network, address });
+            await wallet.save();
+            res.json({ success: true, message: 'Wallet added successfully', wallet });
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to save wallet' });
+    }
+});
+
+app.delete('/api/admin/wallets/:network', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const { network } = req.params;
+        await WalletAddress.findOneAndDelete({ network });
+        res.json({ success: true, message: 'Wallet deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete wallet' });
+    }
+});
+
+// Get active wallets for deposit page
+app.get('/api/wallets', async (req, res) => {
+    try {
+        const wallets = await WalletAddress.find({ isActive: true });
+        res.json({ success: true, wallets });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch wallets' });
+    }
+});
+
+// ============= USER WITHDRAWAL LIMIT (ADMIN) =============
+app.get('/api/admin/users/:userId/withdrawal-limit', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId).select('withdrawalLimit fullName email');
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        res.json({ success: true, withdrawalLimit: user.withdrawalLimit, user: { fullName: user.fullName, email: user.email } });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch withdrawal limit' });
+    }
+});
+
+app.post('/api/admin/users/:userId/withdrawal-limit', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const { limit } = req.body;
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        
+        user.withdrawalLimit = limit === null ? null : parseFloat(limit);
+        await user.save();
+        
+        res.json({ success: true, message: `Withdrawal limit ${limit === null ? 'removed' : 'set to $' + limit} for ${user.fullName}`, withdrawalLimit: user.withdrawalLimit });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update withdrawal limit' });
+    }
+});
+
 // ============= DEPOSIT REQUEST ROUTES =============
 app.post('/api/deposit/request', authenticateToken, async (req, res) => {
     try {
-        const { amount } = req.body;
+        const { amount, network } = req.body;
         const user = await User.findById(req.user.id);
         
         if (amount < 50) {
@@ -252,6 +339,7 @@ app.post('/api/deposit/request', authenticateToken, async (req, res) => {
             userName: user.fullName,
             userEmail: user.email,
             amount: amount,
+            network: network || 'USDT-TRC20',
             status: 'pending'
         });
         
@@ -320,7 +408,7 @@ app.post('/api/admin/deposit-requests/:requestId/process', authenticateToken, is
     }
 });
 
-// ============= WITHDRAWAL ROUTES (UPDATED - NO 3x RULE) =============
+// ============= WITHDRAWAL ROUTES (WITH USER LIMIT) =============
 app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
     try {
         const { amount, network, address } = req.body;
@@ -329,7 +417,10 @@ app.post('/api/withdrawal/request', authenticateToken, async (req, res) => {
         if (amount < 50) return res.status(400).json({ error: 'Minimum withdrawal is $50' });
         if (amount > user.balance) return res.status(400).json({ error: 'Insufficient balance' });
         
-        // NO 3x BALANCE RULE - REMOVED COMPLETELY
+        // Check user's custom withdrawal limit
+        if (user.withdrawalLimit && amount > user.withdrawalLimit) {
+            return res.status(400).json({ error: `Your withdrawal limit is $${user.withdrawalLimit}. Please contact support for higher limits.` });
+        }
         
         const feeAmount = amount * 0.02;
         const netAmount = amount - feeAmount;
@@ -603,13 +694,7 @@ app.get('/api/ai/get-passkey', authenticateToken, async (req, res) => {
 
 // ============= TRADING FUNCTIONS =============
 function analyzeMarket(symbol, currentPrice, change24h, volume, volatility) {
-    const analysis = {
-        decision: null,
-        confidence: 0,
-        reasons: [],
-        signals: []
-    };
-    
+    const analysis = { decision: null, confidence: 0, reasons: [], signals: [] };
     const rsi = 30 + Math.random() * 70;
     const macd = (Math.random() - 0.5) * 2;
     
@@ -620,9 +705,7 @@ function analyzeMarket(symbol, currentPrice, change24h, volume, volatility) {
     analysis.reasons.push(`📉 Volatility: ${volatility > 2 ? 'High' : 'Normal'}`);
     analysis.reasons.push(`🎯 AI Prediction: PROFIT expected (88% return)`);
     
-    let buyScore = 0;
-    let sellScore = 0;
-    
+    let buyScore = 0, sellScore = 0;
     if (rsi < 40) buyScore += 30;
     if (rsi > 60) sellScore += 30;
     if (macd > 0) buyScore += 25;
@@ -635,14 +718,11 @@ function analyzeMarket(symbol, currentPrice, change24h, volume, volatility) {
         analysis.decision = 'buy';
         analysis.confidence = Math.min(95, Math.max(75, 75 + (buyScore - sellScore)));
         analysis.signals.push('🚀 Bullish momentum detected - PROFIT expected');
-        analysis.signals.push('🎯 Entry point identified for maximum gains');
     } else {
         analysis.decision = 'sell';
         analysis.confidence = Math.min(95, Math.max(75, 75 + (sellScore - buyScore)));
         analysis.signals.push('📉 Bearish pressure - SHORT position recommended');
-        analysis.signals.push('💰 Profit opportunity detected');
     }
-    
     return analysis;
 }
 
@@ -654,22 +734,8 @@ async function updateActiveTrades() {
         const startedAt = new Date(trade.startedAt).getTime();
         const elapsed = now - startedAt;
         
-        let progress = Math.min(1, elapsed / trade.durationMs);
-        let simulatedPrice = trade.entryPrice;
-        
-        if (trade.side === 'buy') {
-            const movement = (Math.random() - 0.48) * 0.001;
-            simulatedPrice = trade.entryPrice * (1 + (progress * 0.0005) + movement);
-        } else {
-            const movement = (Math.random() - 0.52) * 0.001;
-            simulatedPrice = trade.entryPrice * (1 - (progress * 0.0005) + movement);
-        }
-        
-        trade.exitPrice = simulatedPrice;
-        
         if (elapsed >= trade.durationMs) {
             const profit = trade.amount * 0.88;
-            
             trade.profit = profit;
             trade.status = 'completed';
             trade.endedAt = new Date();
@@ -681,7 +747,6 @@ async function updateActiveTrades() {
                 user.totalProfit = (user.totalProfit || 0) + profit;
                 user.totalTrades = (user.totalTrades || 0) + 1;
                 user.winRate = 100;
-                
                 await user.save();
                 
                 const transaction = new Transaction({
@@ -690,12 +755,11 @@ async function updateActiveTrades() {
                     type: 'profit',
                     amount: profit,
                     transactionId: 'PROFIT_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-                    description: `${trade.side.toUpperCase()} trade on ${trade.symbolName} completed. WIN! +${(profit/trade.amount*100).toFixed(0)}% profit added to balance.`
+                    description: `${trade.side.toUpperCase()} trade on ${trade.symbolName} completed. WIN! +${(profit/trade.amount*100).toFixed(0)}% profit`
                 });
                 await transaction.save();
             }
         }
-        
         await trade.save();
     }
 }
@@ -705,25 +769,13 @@ setInterval(updateActiveTrades, 5000);
 app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
     try {
         const { symbol, symbolName, category, amount, leverage, duration, durationMs, passkey } = req.body;
-        
         const user = await User.findById(req.user.id);
         
-        if (user.aiApiKey !== passkey) {
-            return res.status(400).json({ error: 'Invalid AI Passkey' });
-        }
+        if (user.aiApiKey !== passkey) return res.status(400).json({ error: 'Invalid AI Passkey' });
+        if (amount < 115) return res.status(400).json({ error: 'Minimum AI trade amount is $115 USD' });
+        if (amount > user.balance) return res.status(400).json({ error: 'Insufficient balance' });
         
-        if (amount < 115) {
-            return res.status(400).json({ error: 'Minimum AI trade amount is $115 USD' });
-        }
-        
-        if (amount > user.balance) {
-            return res.status(400).json({ error: 'Insufficient balance' });
-        }
-        
-        let currentPrice = 0;
-        let change24h = 0;
-        let volume = 0;
-        
+        let currentPrice = 0, change24h = 0, volume = 0;
         try {
             if (category === 'crypto') {
                 const response = await axios.get(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
@@ -761,37 +813,16 @@ app.post('/api/ai/start-trade', authenticateToken, async (req, res) => {
         }
         
         const trade = new Trade({
-            userId: user._id,
-            symbol,
-            symbolName,
-            category,
-            side,
-            amount,
-            leverage,
-            duration: durationText,
-            durationMs,
-            entryPrice: currentPrice,
-            analysis: analysis.reasons.join(' | '),
-            aiPasskey: passkey,
-            status: 'active'
+            userId: user._id, symbol, symbolName, category, side, amount, leverage,
+            duration: durationText, durationMs, entryPrice: currentPrice,
+            analysis: analysis.reasons.join(' | '), aiPasskey: passkey, status: 'active'
         });
-        
         await trade.save();
         
-        res.json({
-            success: true,
-            trade: trade,
-            analysis: {
-                decision: side,
-                confidence: analysis.confidence,
-                reasons: analysis.reasons,
-                signals: analysis.signals,
-                entryPrice: currentPrice,
-                expectedProfit: amount * 0.88,
-                expectedReturn: '88%'
-            }
-        });
-        
+        res.json({ success: true, trade, analysis: {
+            decision: side, confidence: analysis.confidence, reasons: analysis.reasons,
+            signals: analysis.signals, entryPrice: currentPrice, expectedProfit: amount * 0.88
+        } });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to start AI trade' });
@@ -805,17 +836,7 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
         const tradeHistory = await Trade.find({ userId: req.user.id, status: 'completed' }).sort({ endedAt: -1 }).limit(50);
         const withdrawalHistory = await Withdrawal.find({ userId: req.user.id }).sort({ createdAt: -1 }).limit(20);
         
-        const totalInvested = tradeHistory.reduce((sum, t) => sum + t.amount, 0);
-        const totalProfit = tradeHistory.reduce((sum, t) => sum + (t.profit || 0), 0);
-        const roi = totalInvested > 0 ? (totalProfit / totalInvested) * 100 : 0;
-        
-        res.json({
-            user,
-            activeTrades,
-            tradeHistory,
-            withdrawalHistory,
-            roi: roi.toFixed(2)
-        });
+        res.json({ user, activeTrades, tradeHistory, withdrawalHistory });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch profile' });
     }
@@ -824,26 +845,20 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 app.post('/api/ai/stop-trade/:tradeId', authenticateToken, async (req, res) => {
     try {
         const trade = await Trade.findOne({ _id: req.params.tradeId, userId: req.user.id, status: 'active' });
-        if (!trade) {
-            return res.status(404).json({ error: 'Active trade not found' });
-        }
+        if (!trade) return res.status(404).json({ error: 'Active trade not found' });
         
         trade.status = 'stopped';
         trade.endedAt = new Date();
-        
         const profit = trade.amount * 0.44;
         trade.profit = profit;
         
         const user = await User.findById(req.user.id);
         if (user) {
-            const amountToReturn = trade.amount + profit;
-            user.balance = user.balance + amountToReturn;
+            user.balance = user.balance + trade.amount + profit;
             user.totalProfit = (user.totalProfit || 0) + profit;
             await user.save();
         }
-        
         await trade.save();
-        
         res.json({ success: true, profit: profit });
     } catch (error) {
         res.status(500).json({ error: 'Failed to stop trade' });
@@ -860,30 +875,19 @@ app.get('/api/admin/users', authenticateToken, isAdmin, async (req, res) => {
     }
 });
 
-// NEW: Get user details with all registration info
 app.get('/api/admin/users/:userId/details', authenticateToken, isAdmin, async (req, res) => {
     try {
         const user = await User.findById(req.params.userId).select('-password');
         if (!user) return res.status(404).json({ error: 'User not found' });
         
-        // Get additional user data
         const transactions = await Transaction.find({ userId: req.params.userId }).sort({ createdAt: -1 }).limit(20);
         const withdrawals = await Withdrawal.find({ userId: req.params.userId }).sort({ createdAt: -1 }).limit(20);
         const activeTrades = await Trade.find({ userId: req.params.userId, status: 'active' });
         const completedTrades = await Trade.find({ userId: req.params.userId, status: 'completed' });
         
-        res.json({
-            user,
-            transactions,
-            withdrawals,
-            activeTrades,
-            completedTrades,
-            stats: {
-                totalDeposits: user.totalDeposits || 0,
-                totalProfit: user.totalProfit || 0,
-                totalTrades: completedTrades.length,
-                activeTrades: activeTrades.length
-            }
+        res.json({ user, transactions, withdrawals, activeTrades, completedTrades,
+            stats: { totalDeposits: user.totalDeposits || 0, totalProfit: user.totalProfit || 0,
+            totalTrades: completedTrades.length, activeTrades: activeTrades.length, withdrawalLimit: user.withdrawalLimit }
         });
     } catch (error) {
         console.error(error);
@@ -907,7 +911,6 @@ app.post('/api/admin/add-balance', authenticateToken, isAdmin, async (req, res) 
     try {
         const { userId, amount, description } = req.body;
         const admin = await User.findById(req.user.id);
-        
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ error: 'User not found' });
         
@@ -916,17 +919,13 @@ app.post('/api/admin/add-balance', authenticateToken, isAdmin, async (req, res) 
         await user.save();
         
         const transaction = new Transaction({
-            userId: user._id,
-            userName: user.fullName,
-            type: 'admin_deposit',
-            amount: amount,
+            userId: user._id, userName: user.fullName, type: 'admin_deposit', amount: amount,
             transactionId: 'ADMIN_DEP_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-            description: description || 'Admin deposit',
-            adminName: admin.fullName
+            description: description || 'Admin deposit', adminName: admin.fullName
         });
         await transaction.save();
         
-        res.json({ success: true, newBalance: user.balance, message: `Added $${amount} to ${user.fullName}` });
+        res.json({ success: true, newBalance: user.balance });
     } catch (error) {
         res.status(500).json({ error: 'Failed to add balance' });
     }
@@ -936,27 +935,21 @@ app.post('/api/admin/deduct-balance', authenticateToken, isAdmin, async (req, re
     try {
         const { userId, amount, description } = req.body;
         const admin = await User.findById(req.user.id);
-        
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ error: 'User not found' });
-        
         if (user.balance < amount) return res.status(400).json({ error: 'Insufficient balance' });
         
         user.balance = user.balance - amount;
         await user.save();
         
         const transaction = new Transaction({
-            userId: user._id,
-            userName: user.fullName,
-            type: 'admin_deduct',
-            amount: amount,
+            userId: user._id, userName: user.fullName, type: 'admin_deduct', amount: amount,
             transactionId: 'ADMIN_WD_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-            description: description || 'Admin deduction',
-            adminName: admin.fullName
+            description: description || 'Admin deduction', adminName: admin.fullName
         });
         await transaction.save();
         
-        res.json({ success: true, newBalance: user.balance, message: `Deducted $${amount} from ${user.fullName}` });
+        res.json({ success: true, newBalance: user.balance });
     } catch (error) {
         res.status(500).json({ error: 'Failed to deduct balance' });
     }
@@ -966,11 +959,9 @@ app.put('/api/admin/users/:userId/toggle-status', authenticateToken, isAdmin, as
     try {
         const user = await User.findById(req.params.userId);
         if (!user) return res.status(404).json({ error: 'User not found' });
-        
         user.isActive = !user.isActive;
         await user.save();
-        
-        res.json({ success: true, isActive: user.isActive, message: `User ${user.isActive ? 'activated' : 'deactivated'}` });
+        res.json({ success: true, isActive: user.isActive });
     } catch (error) {
         res.status(500).json({ error: 'Failed to update user status' });
     }
@@ -995,60 +986,29 @@ app.get('/api/admin/stats', authenticateToken, isAdmin, async (req, res) => {
         const pendingWithdrawals = await Withdrawal.countDocuments({ status: 'pending' });
         const unreadChats = await ChatMessage.countDocuments({ adminReply: '', readByAdmin: false });
         
-        res.json({
-            totalUsers,
-            activeUsers,
-            totalBalance: totalBalance[0]?.total || 0,
-            totalProfit: totalProfit[0]?.total || 0,
-            pendingDeposits,
-            pendingWithdrawals,
-            unreadChats
-        });
+        res.json({ totalUsers, activeUsers, totalBalance: totalBalance[0]?.total || 0,
+            totalProfit: totalProfit[0]?.total || 0, pendingDeposits, pendingWithdrawals, unreadChats });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch stats' });
     }
 });
 
-app.get('/api/admin/withdrawals', authenticateToken, isAdmin, async (req, res) => {
-    try {
-        const withdrawals = await Withdrawal.find().sort({ createdAt: -1 });
-        res.json(withdrawals);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch withdrawals' });
-    }
-});
-
-app.post('/api/admin/withdrawals/:withdrawalId/process', authenticateToken, isAdmin, async (req, res) => {
-    try {
-        const { status } = req.body;
-        const withdrawal = await Withdrawal.findById(req.params.withdrawalId);
-        
-        if (!withdrawal) return res.status(404).json({ error: 'Withdrawal not found' });
-        
-        withdrawal.status = status;
-        withdrawal.processedAt = new Date();
-        withdrawal.processedBy = req.user.email;
-        
-        await withdrawal.save();
-        
-        await Transaction.findOneAndUpdate(
-            { transactionId: { $regex: withdrawal._id } },
-            { status: status === 'approved' ? 'completed' : 'failed' }
-        );
-        
-        if (status === 'rejected') {
-            const user = await User.findById(withdrawal.userId);
-            if (user) {
-                user.balance = user.balance + withdrawal.amount;
-                await user.save();
-            }
+// Initialize default wallets
+async function initializeWallets() {
+    const defaultWallets = [
+        { network: 'USDT-TRC20', address: 'TNM2SREr7uAVbumYbzwXvFCa3TejcXAtGV' },
+        { network: 'Bitcoin-BTC', address: '1PQAwm2hs4jnjigaMG45RbLbg2UfSPqnqS' },
+        { network: 'Ethereum-ETH', address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' }
+    ];
+    
+    for (const wallet of defaultWallets) {
+        const exists = await WalletAddress.findOne({ network: wallet.network });
+        if (!exists) {
+            await WalletAddress.create(wallet);
+            console.log(`✅ Created default wallet for ${wallet.network}`);
         }
-        
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to process withdrawal' });
     }
-});
+}
 
 // Create default admin
 async function createDefaultAdmin() {
@@ -1057,25 +1017,13 @@ async function createDefaultAdmin() {
         if (!adminExists) {
             const hashedPassword = await bcrypt.hash('Admin123!', 10);
             const admin = new User({
-                email: 'admin@algonflow.com',
-                password: hashedPassword,
-                fullName: 'System Administrator',
-                age: 30,
-                country: 'United States',
-                countryCode: '+1',
-                phoneNumber: '1234567890',
-                employmentStatus: 'Employed',
-                tradingExperience: 'Expert',
-                fundsSource: 'Business Revenue',
-                termsAccepted: true,
-                isAdmin: true,
-                balance: 10000,
-                aiApiKey: 'ADMIN2024KEY'
+                email: 'admin@algonflow.com', password: hashedPassword, fullName: 'System Administrator',
+                age: 30, country: 'United States', countryCode: '+1', phoneNumber: '1234567890',
+                employmentStatus: 'Employed', tradingExperience: 'Expert', fundsSource: 'Business Revenue',
+                termsAccepted: true, isAdmin: true, balance: 10000, aiApiKey: 'ADMIN2024KEY', withdrawalLimit: null
             });
             await admin.save();
             console.log('✅ Default admin created: admin@algonflow.com / Admin123!');
-        } else {
-            console.log('✅ Admin already exists');
         }
     } catch (error) {
         console.error('Error creating admin:', error);
@@ -1084,29 +1032,19 @@ async function createDefaultAdmin() {
 
 // Serve HTML files
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/index.html', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
-app.get('/register.html', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
-app.get('/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'profile.html')));
-app.get('/profile.html', (req, res) => res.sendFile(path.join(__dirname, 'profile.html')));
 app.get('/deposit', (req, res) => res.sendFile(path.join(__dirname, 'deposit.html')));
-app.get('/deposit.html', (req, res) => res.sendFile(path.join(__dirname, 'deposit.html')));
 app.get('/withdraw', (req, res) => res.sendFile(path.join(__dirname, 'withdraw.html')));
-app.get('/withdraw.html', (req, res) => res.sendFile(path.join(__dirname, 'withdraw.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
-app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/terms', (req, res) => res.sendFile(path.join(__dirname, 'terms.html')));
-app.get('/terms.html', (req, res) => res.sendFile(path.join(__dirname, 'terms.html')));
 app.get('/privacy', (req, res) => res.sendFile(path.join(__dirname, 'privacy.html')));
-app.get('/privacy.html', (req, res) => res.sendFile(path.join(__dirname, 'privacy.html')));
 
 app.listen(PORT, async () => {
     await createDefaultAdmin();
+    await initializeWallets();
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`✅ ALL TRADES ARE PROFITABLE - 88% return on every trade`);
-    console.log(`✅ No losses - users always make profit`);
-    console.log(`✅ Deposit request system active`);
-    console.log(`✅ Withdrawal - NO 3x rule - users can withdraw any amount`);
+    console.log(`✅ Admin can set withdrawal limits per user`);
+    console.log(`✅ Admin can manage wallet addresses dynamically`);
 });
